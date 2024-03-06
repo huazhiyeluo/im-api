@@ -1,0 +1,14 @@
+mysql:
+  dns: "root:liao??1517@tcp(139.196.98.139:3306)/?charset=utf8&parseTime=True&loc=Local"
+redis:
+  addr: "139.196.98.139:6379"
+  password: "liao??1517"
+  db: 0
+port:
+  server: ":8081"
+  udp: 5000
+cdn:
+  url: "http://localhost:8081"
+
+
+

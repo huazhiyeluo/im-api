@@ -20,9 +20,13 @@ func Router() *gin.Engine {
 	r.POST("/user/login", service.Login)
 	r.POST("/user/register", service.Register)
 
-	r.POST("/user/getContactList", service.GetContactList)
+	r.POST("/user/getContactList", func(c *gin.Context) {
+		service.GetContactList(c, manager)
+	})
 	r.POST("/user/getGroupList", service.GetGroupList)
-	r.POST("/user/getGroupUser", service.GetGroupUser)
+	r.POST("/user/getGroupUser", func(c *gin.Context) {
+		service.GetGroupUser(c, manager)
+	})
 
 	r.POST("/user/chatMsg", service.ChatMsg)
 	r.POST("/attach/upload", service.Upload)

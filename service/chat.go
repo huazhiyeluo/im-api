@@ -1,8 +1,12 @@
 package service
 
 import (
+	"context"
 	"demoapi/model"
+	"demoapi/schema"
 	"demoapi/utils"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -44,7 +48,6 @@ type Client struct {
 	Manager       *Manager        //对应管理者
 	Conn          *websocket.Conn //websocket 连接
 	Message       chan *Message   // 消息
-	IsOnline      bool            //是否在线 0，否 1是
 	HeartbeatTime int64           //心跳时间
 	LoginTime     int64           //登录时间
 }
@@ -86,7 +89,6 @@ func Chat(c *gin.Context, manager *Manager) {
 		Manager:       manager,
 		Conn:          conn,
 		Message:       make(chan *Message),
-		IsOnline:      true,
 		HeartbeatTime: nowtime,
 		LoginTime:     nowtime,
 	}
@@ -99,7 +101,7 @@ func Chat(c *gin.Context, manager *Manager) {
 // 读取消息
 func (client *Client) ReadData() {
 	for {
-		log.Println("ReadData0", client.Id, client.Uid, client.IsOnline)
+		log.Println("ReadData0", client.Id, client.Uid)
 		msg := &Message{}
 		err := client.Conn.ReadJSON(msg)
 		if err != nil {
@@ -163,5 +165,49 @@ func (client *Client) SendHeartMsg(msg *Message) {
 }
 
 func (client *Client) SendNoticeMsg(msg *Message) {
+	log.Println("SendNoticeMsg", msg)
+	// 将消息加入节点的消息队列
+	if c, ok := client.Manager.Clients.Load(msg.ToId); ok {
+		c.(*Client).Message <- msg
+	}
+}
 
+// ----------------------------------------------------------------	----------------------------------------------------------------
+func ChatMsg(c *gin.Context) {
+	data := schema.ChatMsg{}
+	c.Bind(&data)
+	ctx := context.Background()
+	var rkey string
+	if data.MsgType == 1 {
+		if data.FromId > data.ToId {
+			rkey = fmt.Sprintf("msg_%d_%d", data.ToId, data.FromId)
+		} else {
+			rkey = fmt.Sprintf("msg_%d_%d", data.FromId, data.ToId)
+		}
+	}
+	if data.MsgType == 2 {
+		rkey = fmt.Sprintf("msg_%d_%d", 0, data.FromId)
+	}
+	var chats []string
+	var err error
+	if data.IsRev == 1 {
+		chats, err = utils.RDB.ZRevRange(ctx, rkey, data.Start, data.End).Result()
+	} else {
+		chats, err = utils.RDB.ZRange(ctx, rkey, data.Start, data.End).Result()
+	}
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "数据错误"})
+		return
+	}
+	newChats := utils.ReverseStringArray(chats)
+	var tempChats []*model.Message
+	for _, v := range newChats {
+		msg := &model.Message{}
+		json.Unmarshal([]byte(v), msg)
+		tempChats = append(tempChats, msg)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": tempChats,
+	})
 }

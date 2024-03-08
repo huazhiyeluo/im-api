@@ -35,7 +35,6 @@ func (m *Manager) Start() {
 		select {
 		case client := <-m.Register:
 			m.RegisterClient(client)
-
 		case client := <-m.UnRegister:
 			m.UnRegisterClient(client)
 		case message := <-m.Message:
@@ -60,7 +59,6 @@ func (m *Manager) RegisterClient(client *Client) {
 // 关闭客户端
 func (m *Manager) UnRegisterClient(client *Client) {
 	client.Conn.Close()
-	client.IsOnline = false
 	m.Clients.Delete(client.Uid)
 	go m.SendUserStatus(client.Uid, MSG_MEDIA_OFFLINE)
 	fmt.Println("Client Unregistered:", client.Uid)
@@ -68,13 +66,16 @@ func (m *Manager) UnRegisterClient(client *Client) {
 
 // 设置用户状态
 func (m *Manager) SendUserStatus(uid uint64, msgMedia uint32) {
+
 	contacts, err := model.GetContactList(uid, 1)
 	if err != nil {
 		log.Println(err)
 	}
+
 	for _, v := range contacts {
 		if client, ok := m.Clients.Load(v.ToId); ok {
-			msg := &Message{FromId: v.FromId, ToId: v.ToId, MsgType: 4, MsgMedia: msgMedia}
+			log.Println("SendUserStatus", uid, v.ToId)
+			msg := &Message{FromId: v.FromId, ToId: v.ToId, MsgType: 4, MsgMedia: msgMedia, Content: "状态"}
 			client.(*Client).Manager.Message <- msg
 		}
 	}
@@ -135,4 +136,17 @@ func (m *Manager) StoreRedis(msg *Message) {
 		log.Println("StoreRedis", err)
 	}
 	log.Println("count", count, "StoreRedis", rkey)
+}
+
+// 用户在线状态检查
+func (m *Manager) CheckUserOnlineStatus(uids []uint64) map[uint64]bool {
+	res := make(map[uint64]bool)
+	for _, uid := range uids {
+		if _, ok := m.Clients.Load(uid); ok {
+			res[uid] = true
+		} else {
+			res[uid] = false
+		}
+	}
+	return res
 }

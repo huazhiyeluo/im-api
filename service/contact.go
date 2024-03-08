@@ -4,66 +4,63 @@ import (
 	"demoapi/model"
 	"demoapi/schema"
 	"demoapi/utils"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetContactList(c *gin.Context) {
-
+// 1、联系人列表
+func GetContactList(c *gin.Context, manager *Manager) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
-	uid := uint64(utils.ToNumber(data["uid"]))
-
-	contacts, err := model.GetContactList(uid, 1)
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+	contacts, err := model.GetContactList(fromId, 1)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
 
 	toIds := []uint64{}
-
 	for _, v := range contacts {
 		toIds = append(toIds, v.ToId)
 	}
-	targetUsers, err := model.GetUserByUids(toIds)
+	toUsers, err := model.GetUserByUids(toIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
-	tempTargetUsers := make(map[uint64]*model.User)
-	for _, v := range targetUsers {
-		tempTargetUsers[v.Uid] = v
+	tempToUsers := make(map[uint64]*model.User)
+	for _, v := range toUsers {
+		tempToUsers[v.Uid] = v
 	}
 
-	// onlines := data.CheckOnline(toIds)
+	onlines := manager.CheckUserOnlineStatus(toIds)
 
-	var dataUsers []*schema.ResContact
-
+	var dataUsers []*schema.ResFriend
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResContact{
+		dataUsers = append(dataUsers, &schema.ResFriend{
 			Uid:      v.ToId,
-			Username: tempTargetUsers[v.ToId].Username,
-			Avatar:   tempTargetUsers[v.ToId].Avatar,
-			// IsOnline: onlines[v.ToId],
+			Username: tempToUsers[v.ToId].Username,
+			Avatar:   tempToUsers[v.ToId].Avatar,
+			IsOnline: onlines[v.ToId],
 		})
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": dataUsers,
 	})
 }
 
+// 2、群组列表
 func GetGroupList(c *gin.Context) {
 
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
-	uid := uint64(utils.ToNumber(data["uid"]))
-
-	contacts, err := model.GetContactList(uid, 2)
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+	contacts, err := model.GetContactList(fromId, 2)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -73,37 +70,37 @@ func GetGroupList(c *gin.Context) {
 	for _, v := range contacts {
 		toIds = append(toIds, v.ToId)
 	}
-	targetGroups, err := model.GetGroupByGroupIds(toIds)
+	groups, err := model.GetGroupByGroupIds(toIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
-	tempTargetGroups := make(map[uint64]*model.Group)
-	for _, v := range targetGroups {
-		tempTargetGroups[v.GroupId] = v
+	tempGroups := make(map[uint64]*model.Group)
+	for _, v := range groups {
+		tempGroups[v.GroupId] = v
 	}
 
-	var dataUsers []*schema.ResContact
-
+	var dataUsers []*schema.ResGroup
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResContact{
-			Uid:      v.ToId,
-			Username: tempTargetGroups[v.ToId].Name,
-			Avatar:   tempTargetGroups[v.ToId].Icon,
+		dataUsers = append(dataUsers, &schema.ResGroup{
+			GroupId: v.ToId,
+			Name:    tempGroups[v.ToId].Name,
+			Icon:    tempGroups[v.ToId].Icon,
+			Info:    tempGroups[v.ToId].Info,
 		})
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": dataUsers,
 	})
 }
 
-func GetGroupUser(c *gin.Context) {
+// 3、群成员列表
+func GetGroupUser(c *gin.Context, manager *Manager) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
-	groupId := uint64(utils.ToNumber(data["group_id"]))
+	groupId := uint64(utils.ToNumber(data["groupId"]))
 	contacts, err := model.GetGroupContactList(groupId, 2)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
@@ -115,23 +112,25 @@ func GetGroupUser(c *gin.Context) {
 		fromIds = append(fromIds, v.FromId)
 	}
 
-	targetUsers, err := model.GetUserByUids(fromIds)
+	toUsers, err := model.GetUserByUids(fromIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
-	tempTargetUsers := make(map[uint64]*model.User)
-	for _, v := range targetUsers {
-		tempTargetUsers[v.Uid] = v
+	tempToUsers := make(map[uint64]*model.User)
+	for _, v := range toUsers {
+		tempToUsers[v.Uid] = v
 	}
 
-	var dataUsers []*schema.ResContact
+	onlines := manager.CheckUserOnlineStatus(fromIds)
 
+	var dataUsers []*schema.ResFriend
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResContact{
-			Uid:      v.FromId,
-			Username: tempTargetUsers[v.FromId].Username,
-			Avatar:   tempTargetUsers[v.FromId].Avatar,
+		dataUsers = append(dataUsers, &schema.ResFriend{
+			Uid:      v.ToId,
+			Username: tempToUsers[v.ToId].Username,
+			Avatar:   tempToUsers[v.ToId].Avatar,
+			IsOnline: onlines[v.ToId],
 		})
 	}
 
@@ -141,28 +140,30 @@ func GetGroupUser(c *gin.Context) {
 	})
 }
 
+// 4、添加好友
 func AddFriend(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
-	uid := uint64(utils.ToNumber(data["uid"]))
-	targetId := uint64(utils.ToNumber(data["targetId"]))
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+	toId := uint64(utils.ToNumber(data["toId"]))
 
 	insertContachData := &model.Contact{
-		FromId: uid,
-		ToId:   targetId,
+		FromId: fromId,
+		ToId:   toId,
 		Type:   1,
 		Desc:   "",
 	}
 	contact, err := model.CreateContact(insertContachData)
 	if err != nil {
+		log.Println(contact)
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
 	insertFriendContactData := &model.Contact{
-		FromId: uid,
-		ToId:   targetId,
+		FromId: toId,
+		ToId:   fromId,
 		Type:   1,
 		Desc:   "",
 	}
@@ -179,16 +180,17 @@ func AddFriend(c *gin.Context) {
 
 }
 
+// 5、加入群组
 func JoinGroup(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
-	uid := uint64(utils.ToNumber(data["uid"]))
-	targetId := uint64(utils.ToNumber(data["targetId"]))
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+	toId := uint64(utils.ToNumber(data["toId"]))
 
 	insertContachData := &model.Contact{
-		FromId: uid,
-		ToId:   targetId,
+		FromId: fromId,
+		ToId:   toId,
 		Type:   2,
 		Desc:   "",
 	}

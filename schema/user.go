@@ -12,11 +12,12 @@ type Register struct {
 }
 
 type ChatMsg struct {
-	SenderId   uint64 // 发送者
-	ReceiverId uint64 // 接受者
-	Start      int64  // 开始
-	End        int64  // 结束
-	IsRev      uint32 // 是否正序
+	FromId  uint64 // 发送者
+	ToId    uint64 // 接受者
+	MsgType uint32 // 1单聊消息 2群聊消息
+	Start   int64  // 开始
+	End     int64  // 结束
+	IsRev   uint32 // 是否正序
 }
 
 type EditUser struct {

@@ -1,4 +1,4 @@
-package models
+package service
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fatih/set"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/gin-gonic/gin"
@@ -25,29 +24,73 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	Id            string
-	Conn          *websocket.Conn
-	Message       chan Message
-	Uid           uint64
-	IsOnline      bool          //是否在线 0，否 1是
-	HeartbeatTime int64         //心跳时间
-	LoginTime     int64         //登录时间
-	GroupSets     set.Interface //好友 / 群
+	Id            string          //唯一标识符
+	Uid           uint64          // UID
+	Conn          *websocket.Conn //websocket 连接
+	Message       chan Message    // 消息
+	IsOnline      bool            //是否在线 0，否 1是
+	HeartbeatTime int64           //心跳时间
+	LoginTime     int64           //登录时间
+}
+
+type Manager struct {
+	Clients    map[uint64]*Client
+	Register   chan *Client
+	UnRegister chan *Client
+	Message    chan *Message
+}
+
+func NewManager() *Manager {
+	return &Manager{
+		Clients:    make(map[uint64]*Client),
+		Register:   make(chan *Client),
+		UnRegister: make(chan *Client),
+		Message:    make(chan *Message),
+	}
 }
 
 type Message struct {
-	SenderId   uint64
-	ReceiverId uint64
-	Type       uint32
-	Media      uint32
-	Content    string
-	CreateTime int64
+	FromId     uint64 // ID [主]
+	ToId       uint64 // ID [从]
+	MsgType    uint32 // 消息类型 1私信 2群 3广播
+	MsgMedia   uint32 // 图片类型 1文字 2图片 3 音频 4 视频
+	Content    string // 内容
+	CreateTime int64  // 创建时间
+	Status     uint32 // 状态
 }
 
-var clientMap map[uint64]*Client = make(map[uint64]*Client) // 用户ID到WebSocket节点的映射
+func (manager *Manager) Start() {
+	for {
+		select {
+		case client := <-manager.Register:
+			manager.Clients[client.Uid] = client
+			fmt.Println("Client Registered:", client.Uid)
+
+		case client := <-manager.UnRegister:
+			if _, ok := manager.Clients[client.Uid]; ok {
+				delete(manager.Clients, client.Uid)
+				fmt.Println("Client Unregistered:", client.Uid)
+			}
+
+		case message := <-manager.Message:
+			// 在这里处理接收到的消息，可以根据业务逻辑进行处理
+			fmt.Printf("Received message from %d to %d: %s\n", message.From, message.To, message.Content)
+			// 在示例中，直接将消息转发给目标客户端
+			if targetClient, ok := manager.Clients[message.To]; ok {
+				err := targetClient.Conn.WriteJSON(message)
+				if err != nil {
+					fmt.Println("Error sending message:", err)
+				}
+			}
+		}
+	}
+}
+
 var rwLocker sync.RWMutex
 
 func Chat(c *gin.Context) {
+
+	manager := utils.Manager
 
 	query := c.Request.URL.Query()
 	uid := uint64(utils.StringToUint32(query.Get("uid")))
@@ -59,31 +102,29 @@ func Chat(c *gin.Context) {
 
 	nowtime := time.Now().Unix()
 	client := &Client{
-		Id:            conn.RemoteAddr().String(),
+		Id:            utils.GenGUID(),
+		Uid:           uid,
 		Conn:          conn,
 		Message:       make(chan Message),
-		Uid:           uid,
 		IsOnline:      true,
 		HeartbeatTime: nowtime,
 		LoginTime:     nowtime,
-		GroupSets:     set.New(set.ThreadSafe),
 	}
+	manager.Register <- client
 
-	registerClient(client)
-
-	go client.readData()
-	go client.writeData()
 }
 
 func registerClient(client *Client) {
 	rwLocker.Lock()
 	clientMap[client.Uid] = client
+	go SendUserStatus(client.Uid, 1)
 	rwLocker.Unlock()
 }
 
 func unregisterClient(uid uint64) {
 	rwLocker.Lock()
 	delete(clientMap, uid)
+	go SendUserStatus(uid, 2)
 	rwLocker.Unlock()
 }
 
@@ -159,6 +200,27 @@ func sendGroupMsg(msg Message) {
 	}
 }
 
+func SendUserStatus(senderId uint64, media uint32) {
+	contacts, err := GetContactList(senderId, 1)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, v := range contacts {
+		log.Println("sendUserStatus-send", senderId, v)
+		rwLocker.Lock()
+		client, ok := clientMap[v.TargetId]
+		rwLocker.Unlock()
+		if ok {
+			log.Println("sendUserStatus-ok", senderId, v)
+			msg := Message{SenderId: senderId, ReceiverId: v.TargetId, Type: 4, Media: media}
+			log.Println("sendUserStatus", v.TargetId, msg)
+			// 将消息加入节点的消息队列
+			client.Message <- msg
+		}
+	}
+}
+
 func (client *Client) Heartbeat(currentTime int64) {
 	client.HeartbeatTime = currentTime
 }
@@ -197,9 +259,10 @@ var udpData chan Message = make(chan Message)
 
 func (client *Client) readData() {
 	for {
-		log.Println("readData0", client.Id)
+		log.Println("readData0", client.Id, client.Uid, client.IsOnline)
 		_, p, err := client.Conn.ReadMessage()
 		if err != nil {
+			unregisterClient(client.Uid)
 			log.Println("readData1", err, p)
 			return
 		}
@@ -212,7 +275,6 @@ func (client *Client) readData() {
 		}
 
 		if msg.Type == 3 {
-			log.Println("readData 心跳", string(p))
 			nowtime := time.Now().Unix()
 			client.Heartbeat(nowtime)
 		} else {

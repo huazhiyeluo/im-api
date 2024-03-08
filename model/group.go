@@ -1,23 +1,9 @@
-package models
+package model
 
 import (
 	"demoapi/utils"
 	"log"
 )
-
-// 群管理表
-type Group struct {
-	GroupId  uint64 `gorm:"column:group_id;primary_key;AUTO_INCREMENT"` // ID
-	OwnerUid uint64 `gorm:"column:owner_uid;default:0"`                 // 拥有者
-	Type     uint32 `gorm:"column:type;default:0"`                      // 群类型
-	Name     string `gorm:"column:name"`                                // 名称
-	Icon     string `gorm:"column:icon"`                                // 图标
-	Info     string `gorm:"column:info"`                                // 描述
-}
-
-func (m *Group) TableName() string {
-	return "test.group"
-}
 
 // 创建群
 func CreateGroup(m *Group) (*Group, error) {

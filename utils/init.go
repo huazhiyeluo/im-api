@@ -52,17 +52,3 @@ func InitRedis() {
 		DB:       viper.GetInt("redis.db"),          // use default DB
 	})
 }
-
-func Timer(delay time.Duration, tick time.Duration, fun func()) {
-	go func() {
-		t := time.NewTimer(delay)
-		for {
-			select {
-			case <-t.C:
-				// 定时器触发的处理逻辑
-				fun()
-				t.Reset(tick)
-			}
-		}
-	}()
-}

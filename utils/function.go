@@ -60,3 +60,12 @@ func GenGUID() string {
 	u := uuid.NewV4()
 	return strings.Replace(u.String(), "-", "", 4)
 }
+
+func IsContainUint32(str uint32, arr []uint32) bool {
+	for _, element := range arr {
+		if str == element {
+			return true
+		}
+	}
+	return false
+}

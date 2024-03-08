@@ -1,28 +1,9 @@
-package models
+package model
 
 import (
 	"demoapi/utils"
 	"log"
 )
-
-// 用户表
-type User struct {
-	Uid        uint64 `gorm:"column:uid;primary_key;AUTO_INCREMENT"` // UID
-	Username   string `gorm:"column:username"`                       // 用户名
-	Password   string `gorm:"column:password"`                       // 密码
-	Email      string `gorm:"column:email"`                          // 邮箱
-	Phone      string `gorm:"column:phone"`                          // 手机号
-	Avatar     string `gorm:"column:avatar"`                         // 头像
-	Identity   string `gorm:"column:identity"`                       // 验证token
-	Info       string `gorm:"column:info"`                           // 描述
-	ClientIp   string `gorm:"column:client_ip"`                      // 客户端IP
-	ClientPort string `gorm:"column:client_port"`                    // 客户端端口
-	IsLogout   uint32 `gorm:"column:is_logout;default:0"`            // 是否退出登录0否 1是
-}
-
-func (m *User) TableName() string {
-	return "test.user"
-}
 
 // 创建用户
 func CreateUser(m *User) (*User, error) {

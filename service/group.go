@@ -1,7 +1,7 @@
 package service
 
 import (
-	"demoapi/models"
+	"demoapi/model"
 	"demoapi/schema"
 	"net/http"
 
@@ -11,7 +11,7 @@ import (
 func EditGroup(c *gin.Context) {
 	data := schema.EditGroup{}
 	c.Bind(&data)
-	group, err := models.FindGroupByName(data.Name)
+	group, err := model.FindGroupByName(data.Name)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -20,26 +20,26 @@ func EditGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经存在"})
 		return
 	}
-	insertData := &models.Group{
+	insertData := &model.Group{
 		OwnerUid: data.OwnerUid,
 		Type:     data.Type,
 		Name:     data.Name,
 		Icon:     data.Icon,
 		Info:     data.Info,
 	}
-	group, err = models.CreateGroup(insertData)
+	group, err = model.CreateGroup(insertData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
-	insertContactData := &models.Contact{
-		Uid:      data.OwnerUid,
-		TargetId: group.GroupId,
-		Type:     2,
-		Desc:     "",
+	insertContactData := &model.Contact{
+		FromId: data.OwnerUid,
+		ToId:   group.GroupId,
+		Type:   2,
+		Desc:   "",
 	}
-	_, err = models.CreateContact(insertContactData)
+	_, err = model.CreateContact(insertContactData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return

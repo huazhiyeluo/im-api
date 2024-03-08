@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"demoapi/models"
+	"demoapi/model"
 	"demoapi/schema"
 	"demoapi/utils"
 	"encoding/json"
@@ -16,7 +16,7 @@ import (
 func Login(c *gin.Context) {
 	data := schema.Login{}
 	c.Bind(&data)
-	user, err := models.FindUserByName(data.Username)
+	user, err := model.FindUserByName(data.Username)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -46,13 +46,13 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "密码和确认密码不一致"})
 		return
 	}
-	insertData := &models.User{
+	insertData := &model.User{
 		Username: data.Username,
 		Password: utils.GenMd5(data.Password),
 		Email:    "",
 		Phone:    "",
 	}
-	user, err := models.CreateUser(insertData)
+	user, err := model.CreateUser(insertData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -66,7 +66,7 @@ func Register(c *gin.Context) {
 func setSession(uid uint64) string {
 	nowtime := time.Now().Unix()
 	sesskey := utils.GenMd5(fmt.Sprintf("%d%d", uid, nowtime))
-	rkey := models.Rkonline(uid)
+	rkey := model.Rkonline(uid)
 
 	utils.RDB.Set(context.TODO(), rkey, sesskey, time.Minute*time.Duration(0))
 	utils.RDB.ExpireAt(context.TODO(), rkey, time.Now().Add(time.Minute*60*24*2))
@@ -76,14 +76,17 @@ func setSession(uid uint64) string {
 func ChatMsg(c *gin.Context) {
 	data := schema.ChatMsg{}
 	c.Bind(&data)
-	senderId := data.SenderId
-	receiverId := data.ReceiverId
 	ctx := context.Background()
 	var rkey string
-	if senderId > receiverId {
-		rkey = fmt.Sprintf("msg_%d_%d", receiverId, senderId)
-	} else {
-		rkey = fmt.Sprintf("msg_%d_%d", senderId, receiverId)
+	if data.MsgType == 1 {
+		if data.FromId > data.ToId {
+			rkey = fmt.Sprintf("msg_%d_%d", data.ToId, data.FromId)
+		} else {
+			rkey = fmt.Sprintf("msg_%d_%d", data.FromId, data.ToId)
+		}
+	}
+	if data.MsgType == 2 {
+		rkey = fmt.Sprintf("msg_%d_%d", 0, data.FromId)
 	}
 	var chats []string
 	var err error
@@ -97,13 +100,12 @@ func ChatMsg(c *gin.Context) {
 		return
 	}
 	newChats := utils.ReverseStringArray(chats)
-	var tempChats []*models.Message
+	var tempChats []*model.Message
 	for _, v := range newChats {
-		msg := &models.Message{}
+		msg := &model.Message{}
 		json.Unmarshal([]byte(v), msg)
 		tempChats = append(tempChats, msg)
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": tempChats,
@@ -114,7 +116,7 @@ func ChatMsg(c *gin.Context) {
 func EditUser(c *gin.Context) {
 	data := schema.EditUser{}
 	c.Bind(&data)
-	user, err := models.FindUserByUid(data.Uid)
+	user, err := model.FindUserByUid(data.Uid)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -123,13 +125,13 @@ func EditUser(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
 		return
 	}
-	updateData := &models.User{
+	updateData := &model.User{
 		Uid:      data.Uid,
 		Username: data.Username,
 		Info:     data.Info,
 		Avatar:   data.Avatar,
 	}
-	user, err = models.UpdateUser(updateData)
+	user, err = model.UpdateUser(updateData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return

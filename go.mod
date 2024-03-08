@@ -3,9 +3,8 @@ module demoapi
 go 1.21.4
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/fatih/set v0.2.1
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gorilla/websocket v1.5.1
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/satori/go.uuid v1.2.0
@@ -13,7 +12,6 @@ require (
 	gorm.io/driver/mysql v1.5.4
 	gorm.io/gorm v1.25.7
 )
-
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
@@ -28,6 +26,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -39,6 +38,8 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.31.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect

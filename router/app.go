@@ -1,32 +1,23 @@
 package router
 
 import (
-	"demoapi/service"
-	"time"
+	"imapi/internal/server"
+	"imapi/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Router() *gin.Engine {
-
-	//启动管理者服务
-	manager := service.NewManager()
-	InitTimer(manager)
-	go manager.Start()
-
 	r := gin.Default()
+
 	r.Static("/static", "static")
 
 	r.POST("/user/login", service.Login)
 	r.POST("/user/register", service.Register)
 
-	r.POST("/user/getContactList", func(c *gin.Context) {
-		service.GetContactList(c, manager)
-	})
+	r.POST("/user/getContactList", service.GetContactList)
 	r.POST("/user/getGroupList", service.GetGroupList)
-	r.POST("/user/getGroupUser", func(c *gin.Context) {
-		service.GetGroupUser(c, manager)
-	})
+	r.POST("/user/getGroupUser", service.GetGroupUser)
 
 	r.POST("/user/chatMsg", service.ChatMsg)
 	r.POST("/attach/upload", service.Upload)
@@ -35,30 +26,17 @@ func Router() *gin.Engine {
 	r.POST("/user/editGroup", service.EditGroup)
 
 	r.POST("/user/addFriend", service.AddFriend)
+	r.POST("/user/agreeFriend", service.AgreeFriend)
+	r.POST("/user/refuseFriend", service.RefuseFriend)
+	r.POST("/user/deleteFriend", service.DeleteFriend)
+
 	r.POST("/user/joinGroup", service.JoinGroup)
+	r.POST("/user/agreeJoinGroup", service.AgreeJoinGroup)
+	r.POST("/user/refuseJoinGroup", service.RefuseJoinGroup)
+	r.POST("/user/deleteJoinGroup", service.DeleteJoinGroup)
 
 	//websocket
-	r.GET("/chat", func(c *gin.Context) {
-		service.Chat(c, manager)
-	})
+	r.GET("/chat", server.Chat)
 
 	return r
-}
-
-func InitTimer(m *service.Manager) {
-	Timer(time.Second*3, time.Second*3, m.CleanConnection)
-}
-
-func Timer(delay time.Duration, tick time.Duration, fun func()) {
-	go func() {
-		t := time.NewTimer(delay)
-		for {
-			select {
-			case <-t.C:
-				// 定时器触发的处理逻辑
-				fun()
-				t.Reset(tick)
-			}
-		}
-	}()
 }

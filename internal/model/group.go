@@ -1,7 +1,7 @@
 package model
 
 import (
-	"demoapi/utils"
+	"imapi/internal/utils"
 	"log"
 )
 
@@ -45,7 +45,17 @@ func GetGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
 	return data, err
 }
 
-// 查找用户
+// 查找群
+func FindGroupByGroupId(groupIds uint64) (*Group, error) {
+	m := &Group{}
+	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupIds).Find(m).Debug().Error
+	if err != nil {
+		log.Print("FindGroupByGroupId", err)
+	}
+	return m, err
+}
+
+// 查找用群
 func FindGroupByName(name string) (*Group, error) {
 	m := &Group{}
 	err := utils.DB.Table(m.TableName()).Where("name = ?", name).Find(m).Debug().Error

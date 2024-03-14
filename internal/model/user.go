@@ -1,7 +1,7 @@
 package model
 
 import (
-	"demoapi/utils"
+	"imapi/internal/utils"
 	"log"
 )
 

@@ -8,7 +8,7 @@ port:
   server: ":8081"
   udp: 5000
 cdn:
-  url: "http://localhost:8081"
+  url: "http://localhost:8081/static"
 
 
 

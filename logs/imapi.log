@@ -1,0 +1,6 @@
+2024-03-13T14:00:52.830+0800	info	/Users/data/gowork/src/imapi/main.go:19	Starting
+2024-03-13T14:01:02.825+0800	info	/Users/data/gowork/src/imapi/internal/server/chat.go:125	ReadData0 : 2d259ab4f87c440c8de480fd36d41847 , 1
+2024-03-13T14:01:02.825+0800	info	/Users/data/gowork/src/imapi/internal/server/chat.go:126	ReadData内容: &{1 2 1 2 http://localhost:8081/static/images/d3f6b696c55415919056b61fdd7a216b.png 0 0} 
+2024-03-13T14:01:03.046+0800	info	/Users/data/gowork/src/imapi/internal/server/manager.go:113	count 1 StoreRedis msg_1_2
+2024-03-13T14:01:03.047+0800	info	/Users/data/gowork/src/imapi/internal/server/chat.go:172	sendMsg: &{1 2 1 2 http://localhost:8081/static/images/d3f6b696c55415919056b61fdd7a216b.png 1710309662 0} 
+2024-03-13T14:01:44.598+0800	info	/Users/data/gowork/src/imapi/internal/server/chat.go:121	ReadData1 : websocket: close 1001 (going away) , &{0 0 0 0  0 0}

@@ -40,6 +40,17 @@ func ToNumber(v interface{}) float64 {
 	return i
 }
 
+func ToString(obj interface{}) string {
+	switch obj.(type) {
+	case float32, float64:
+		return fmt.Sprintf("%s", obj)
+	case int, int32, int64:
+		return fmt.Sprintf("%d", obj)
+	default:
+		return fmt.Sprintf("%v", obj)
+	}
+}
+
 func ReverseStringArray(arr []string) []string {
 	// 获取数组长度
 	length := len(arr)

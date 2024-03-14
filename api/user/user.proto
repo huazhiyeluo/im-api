@@ -1,0 +1,25 @@
+syntax = "proto3";
+package imapi.api;
+
+import "google/api/annotations.proto";
+
+
+option go_package = "imapi/api/user";
+
+
+service UserService {
+    rpc GetFriends (GetFriendsRequest) returns (GetFriendsResponse){
+        option (google.api.http) = {
+            post : "/user/login",
+            body : "*"
+          };
+    };
+}
+
+message GetFriendsRequest{
+    string code =1;
+}
+
+message GetFriendsResponse{
+    
+}

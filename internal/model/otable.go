@@ -31,13 +31,12 @@ func (m *Group) TableName() string {
 }
 
 // 联系人表
-// 联系人表
 type Contact struct {
 	Id     uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
 	FromId uint64 `gorm:"column:from_id;default:0"`             // ID [主]
 	ToId   uint64 `gorm:"column:to_id;default:0"`               // ID [从]
 	Type   uint32 `gorm:"column:type;default:0"`                // 联系人类型 1用户 2群
-	Desc   string `gorm:"column:desc;NOT NULL"`                 // 描述
+	Remark string `gorm:"column:remark;NOT NULL"`               // 备注
 }
 
 func (m *Contact) TableName() string {
@@ -58,4 +57,18 @@ type Message struct {
 
 func (m *Message) TableName() string {
 	return "qqim.message"
+}
+
+// 申请联系人表
+type ApplyContact struct {
+	Id     uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	FromId uint64 `gorm:"column:from_id;default:0;NOT NULL"`    // ID [主]
+	ToId   uint64 `gorm:"column:to_id;default:0;NOT NULL"`      // ID  [从]
+	Type   uint32 `gorm:"column:type;default:0;NOT NULL"`       // 联系人类型 1用户 2群
+	Reason string `gorm:"column:reason;NOT NULL"`               // 原因
+	Status uint32 `gorm:"column:status;default:0;NOT NULL"`     // 状态 0默认 1同意 2拒绝
+}
+
+func (m *ApplyContact) TableName() string {
+	return "qqim.apply_contact"
 }

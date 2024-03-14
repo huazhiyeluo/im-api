@@ -1,8 +1,8 @@
 package service
 
 import (
-	"demoapi/model"
-	"demoapi/schema"
+	"imapi/internal/model"
+	"imapi/internal/schema"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +37,7 @@ func EditGroup(c *gin.Context) {
 		FromId: data.OwnerUid,
 		ToId:   group.GroupId,
 		Type:   2,
-		Desc:   "",
+		Remark: "",
 	}
 	_, err = model.CreateContact(insertContactData)
 	if err != nil {

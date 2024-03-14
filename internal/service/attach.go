@@ -1,8 +1,8 @@
 package service
 
 import (
-	"demoapi/utils"
 	"fmt"
+	"imapi/internal/utils"
 	"net/http"
 	"path/filepath"
 	"time"

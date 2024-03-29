@@ -13,22 +13,22 @@ func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
 	for _, v := range contacts {
-		CreateNoticeMsg(&Message{FromId: v.FromId, ToId: v.ToId, MsgType: 4, MsgMedia: msgMedia, Content: "用户状态"})
+		CreateMsg(&Message{FromId: v.FromId, ToId: v.ToId, MsgType: MSG_TYPE_NOTICE, MsgMedia: msgMedia, Content: &MessageContent{Data: "用户状态"}})
 	}
 }
 
 // 2、用户好友
-func UserFriendNoticeMsg(fromId uint64, toId uint64, msgMedia uint32) {
-	CreateNoticeMsg(&Message{FromId: fromId, ToId: toId, MsgType: 4, MsgMedia: msgMedia, Content: "用户好友"})
+func UserFriendNoticeMsg(fromId uint64, toId uint64, content string, msgMedia uint32) {
+	CreateMsg(&Message{FromId: fromId, ToId: toId, MsgType: MSG_TYPE_NOTICE, MsgMedia: msgMedia, Content: &MessageContent{Data: content}})
 }
 
 // 3、用户群
-func UserGroupNoticeMsg(groupId uint64, msgMedia uint32) {
+func UserGroupNoticeMsg(groupId uint64, content string, msgMedia uint32) {
 	contacts, err := model.GetGroupContactList(groupId, 2)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
 	for _, v := range contacts {
-		CreateNoticeMsg(&Message{FromId: v.FromId, ToId: v.FromId, MsgType: 4, MsgMedia: msgMedia, Content: "用户群"})
+		CreateMsg(&Message{FromId: v.FromId, ToId: v.FromId, MsgType: MSG_TYPE_NOTICE, MsgMedia: msgMedia, Content: &MessageContent{Data: content}})
 	}
 }

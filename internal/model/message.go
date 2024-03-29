@@ -38,3 +38,54 @@ func GetMessageList(pageSize uint32, pageNum uint32, toId uint64, msgType uint32
 	}
 	return data, count, err
 }
+
+//-------------------------------------------------------------------MessageUnread--------------------------------------------------------------------
+
+// 创建未读消息
+func CreateMessageUnread(m *MessageUnread) (*MessageUnread, error) {
+	err := utils.DB.Table(m.TableName()).Create(m).Error
+	if err != nil {
+		log.Print("CreateMessageUnread", err)
+	}
+	return m, err
+}
+
+// 获取未读消息
+func GetMessageUnread(uid uint64) ([]*MessageUnread, error) {
+	m := &MessageUnread{}
+	var data []*MessageUnread
+	db := utils.DB.Table(m.TableName())
+
+	db.Where("uid = ?", uid)
+
+	err := db.Limit(500).Order("create_time asc").Find(&data).Error
+	if err != nil {
+		log.Print("GetMessageList", err)
+	}
+	return data, err
+}
+
+// 获取消息
+func GetMessageUnreadCount(uid uint64) (int64, error) {
+	m := &MessageUnread{}
+	var count int64
+
+	db := utils.DB.Table(m.TableName())
+
+	db.Where("uid = ?", uid)
+
+	err := db.Count(&count).Error
+	if err != nil {
+		return count, err
+	}
+	return count, err
+}
+
+func DeleteMessageUnread(uid uint64) (*MessageUnread, error) {
+	m := &MessageUnread{}
+	err := utils.DB.Table(m.TableName()).Where("uid = ?", uid).Delete(m).Error
+	if err != nil {
+		log.Print("DeleteMessageUnread", err)
+	}
+	return m, err
+}

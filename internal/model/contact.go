@@ -27,6 +27,16 @@ func GetGroupContactList(toId uint64, ttype uint32) ([]*Contact, error) {
 	return data, err
 }
 
+// 获取组成员
+func GetGroupContactOne(fromId uint64, toId uint64, ttype uint32) (*Contact, error) {
+	m := &Contact{}
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ? and type = ? ", fromId, toId, ttype).Find(&m).Debug().Error
+	if err != nil {
+		log.Print("GetGroupContactList", err)
+	}
+	return m, err
+}
+
 // 创建关联
 func CreateContact(m *Contact) (*Contact, error) {
 	err := utils.DB.Table(m.TableName()).Create(m).Error

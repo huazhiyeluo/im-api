@@ -15,9 +15,10 @@ func Router() *gin.Engine {
 	r.POST("/user/login", service.Login)
 	r.POST("/user/register", service.Register)
 
-	r.POST("/user/getContactList", service.GetContactList)
+	r.POST("/user/getFriendList", service.GetFriendList)
 	r.POST("/user/getGroupList", service.GetGroupList)
 	r.POST("/user/getGroupUser", service.GetGroupUser)
+	r.POST("/user/getApplyList", service.GetApplyList)
 
 	r.POST("/user/chatMsg", service.ChatMsg)
 	r.POST("/attach/upload", service.Upload)
@@ -26,14 +27,12 @@ func Router() *gin.Engine {
 	r.POST("/user/editGroup", service.EditGroup)
 
 	r.POST("/user/addFriend", service.AddFriend)
-	r.POST("/user/agreeFriend", service.AgreeFriend)
-	r.POST("/user/refuseFriend", service.RefuseFriend)
-	r.POST("/user/deleteFriend", service.DeleteFriend)
+	r.POST("/user/delFriend", service.DelFriend)
 
 	r.POST("/user/joinGroup", service.JoinGroup)
-	r.POST("/user/agreeJoinGroup", service.AgreeJoinGroup)
-	r.POST("/user/refuseJoinGroup", service.RefuseJoinGroup)
-	r.POST("/user/deleteJoinGroup", service.DeleteJoinGroup)
+	r.POST("/user/quitGroup", service.QuitGroup)
+
+	r.POST("/user/operateApply", service.OperateApply)
 
 	//websocket
 	r.GET("/chat", server.Chat)

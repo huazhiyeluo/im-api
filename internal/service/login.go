@@ -29,12 +29,12 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	sessKey := setSession(user.Uid)
+	token := setToken(user.Uid)
 
 	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"sessKey": sessKey,
-		"data":    user,
+		"code":  0,
+		"token": token,
+		"data":  user,
 	})
 }
 
@@ -62,12 +62,12 @@ func Register(c *gin.Context) {
 	})
 }
 
-func setSession(uid uint64) string {
+func setToken(uid uint64) string {
 	nowtime := time.Now().Unix()
-	sesskey := utils.GenMd5(fmt.Sprintf("%d%d", uid, nowtime))
-	rkey := model.Rkonline(uid)
+	token := utils.GenMd5(fmt.Sprintf("%d%d", uid, nowtime))
+	rkey := model.Rktoken(uid)
 
-	utils.RDB.Set(context.TODO(), rkey, sesskey, time.Minute*time.Duration(0))
+	utils.RDB.Set(context.TODO(), rkey, token, time.Minute*time.Duration(0))
 	utils.RDB.ExpireAt(context.TODO(), rkey, time.Now().Add(time.Minute*60*24*2))
-	return sesskey
+	return token
 }

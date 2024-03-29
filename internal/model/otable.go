@@ -24,6 +24,7 @@ type Group struct {
 	Name     string `gorm:"column:name;NOT NULL"`                       // 名称
 	Icon     string `gorm:"column:icon;NOT NULL"`                       // 图标
 	Info     string `gorm:"column:info;NOT NULL"`                       // 描述
+	Num      uint32 `gorm:"column:num;default:0"`                       // 群人数
 }
 
 func (m *Group) TableName() string {
@@ -59,16 +60,34 @@ func (m *Message) TableName() string {
 	return "qqim.message"
 }
 
-// 申请联系人表
-type ApplyContact struct {
-	Id     uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
-	FromId uint64 `gorm:"column:from_id;default:0;NOT NULL"`    // ID [主]
-	ToId   uint64 `gorm:"column:to_id;default:0;NOT NULL"`      // ID  [从]
-	Type   uint32 `gorm:"column:type;default:0;NOT NULL"`       // 联系人类型 1用户 2群
-	Reason string `gorm:"column:reason;NOT NULL"`               // 原因
-	Status uint32 `gorm:"column:status;default:0;NOT NULL"`     // 状态 0默认 1同意 2拒绝
+// 消息表-未读
+type MessageUnread struct {
+	Id         uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	Uid        uint64 `gorm:"column:uid;default:0"`                 // 目标UID
+	FromId     uint64 `gorm:"column:from_id;default:0"`             // ID [主]
+	ToId       uint64 `gorm:"column:to_id;default:0"`               // ID [从]
+	MsgType    uint32 `gorm:"column:msg_type;default:0"`            // 消息类型 1私信 2群 3广播
+	MsgMedia   uint32 `gorm:"column:msg_media;default:0"`           // 图片类型 1文字 2图片 3 音频 4 视频
+	Content    string `gorm:"column:content"`                       // 内容
+	CreateTime int64  `gorm:"column:create_time;default:0"`         // 创建时间
+	Status     uint32 `gorm:"column:status;default:0"`              // 状态
 }
 
-func (m *ApplyContact) TableName() string {
-	return "qqim.apply_contact"
+func (m *MessageUnread) TableName() string {
+	return "qqim.message_unread"
+}
+
+// 申请联系人表
+type Apply struct {
+	Id          uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	FromId      uint64 `gorm:"column:from_id;default:0;NOT NULL"`    // ID [主]
+	ToId        uint64 `gorm:"column:to_id;default:0;NOT NULL"`      // ID  [从]
+	Type        uint32 `gorm:"column:type;default:0;NOT NULL"`       // 联系人类型 1用户 2群
+	Reason      string `gorm:"column:reason;NOT NULL"`               // 原因
+	Status      uint32 `gorm:"column:status;default:0;NOT NULL"`     // 状态 0默认 1同意 2拒绝
+	OperateTime int64  `gorm:"column:operate_time;default:0"`        // 创建时间
+}
+
+func (m *Apply) TableName() string {
+	return "qqim.apply"
 }

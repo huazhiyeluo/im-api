@@ -55,7 +55,7 @@ func FindUserByUid(uid uint64) (*User, error) {
 }
 
 // 指定用户
-func GetUserByUids(uids []uint64) ([]*User, error) {
+func FindUserByUids(uids []uint64) ([]*User, error) {
 	m := &User{}
 	var data []*User
 	err := utils.DB.Table(m.TableName()).Where("uid in ?", uids).Find(&data).Debug().Error

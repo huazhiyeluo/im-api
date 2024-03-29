@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"imapi/internal/model"
 	"imapi/internal/utils"
@@ -17,8 +18,8 @@ const (
 	MSG_TYPE_HEART     = 0 // 心跳消息
 	MSG_TYPE_SINGLE    = 1 // 单聊消息
 	MSG_TYPE_ROOM      = 2 // 群聊消息
-	MSG_TYPE_BROADCAST = 3 // 广播消息
-	MSG_TYPE_NOTICE    = 4 // 通知消息
+	MSG_TYPE_NOTICE    = 3 // 通知消息
+	MSG_TYPE_BROADCAST = 4 // 广播消息
 	MSG_TYPE_ACK       = 5 // 应答消息
 
 	// media（type 1|2） 消息展示样式
@@ -39,10 +40,11 @@ const (
 	MSG_MEDIA_FRIEND_REFUSE = 23 // 拒绝添加好友
 	MSG_MEDIA_FRIEND_DELETE = 24 // 删除好友
 
+	MSG_MEDIA_GROUP_CREATE = 30 // 创建群
 	MSG_MEDIA_GROUP_JOIN   = 31 // 添加群
 	MSG_MEDIA_GROUP_AGREE  = 32 // 成功添加群
 	MSG_MEDIA_GROUP_REFUSE = 33 // 拒绝添加群
-	MSG_MEDIA_GROUP_DELETE = 24 // 删除好友
+	MSG_MEDIA_GROUP_DELETE = 34 // 退出群
 )
 
 var upgrader = websocket.Upgrader{
@@ -60,14 +62,20 @@ type Client struct {
 	LoginTime     int64           //登录时间
 }
 
+type MessageContent struct {
+	Data string //数据
+	Url  string //链接地址
+	Name string //文件名
+}
+
 type Message struct {
-	FromId     uint64 // ID [主]
-	ToId       uint64 // ID [从]
-	MsgType    uint32 // 消息类型 1私信 2群 3广播
-	MsgMedia   uint32 // 图片类型 1文字 2图片 3 音频 4 视频
-	Content    string // 内容
-	CreateTime int64  // 创建时间
-	Status     uint32 // 状态
+	FromId     uint64          // ID [主]
+	ToId       uint64          // ID [从]
+	MsgType    uint32          // 消息类型 1私信 2群 3广播 4通知
+	MsgMedia   uint32          // 图片类型 1文字 2图片 3 音频 4 视频
+	Content    *MessageContent // 内容
+	CreateTime int64           // 创建时间
+	Status     uint32          // 状态
 }
 
 func UpgradeWebSocket(c *gin.Context) (*websocket.Conn, error) {
@@ -85,11 +93,7 @@ func Chat(c *gin.Context) {
 	query := c.Request.URL.Query()
 	uid := uint64(utils.StringToUint32(query.Get("uid")))
 
-	if oldclient, ok := manager.Clients.Load(uid); ok {
-		log.Logger.Info(fmt.Sprintf("下线: %v", uid))
-		msg := &Message{FromId: uid, ToId: uid, MsgType: 4, MsgMedia: MSG_MEDIA_OFFLINE_PACK, Content: "下线"}
-		oldclient.(*Client).Message <- msg
-	}
+	checkSessionKey(c, uid)
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -125,7 +129,7 @@ func (client *Client) ReadData() {
 			log.Logger.Info(fmt.Sprintf("ReadData0 : %v , %v", client.Id, client.Uid))
 			log.Logger.Info(fmt.Sprintf("ReadData内容: %v ", msg))
 		}
-		manager.Message <- msg
+		CreateMsg(msg)
 	}
 }
 
@@ -151,10 +155,11 @@ func Dispatch(msg *Message) {
 		SendMsg(msg, msg.ToId)
 	case MSG_TYPE_ROOM:
 		SendGroupMsg(msg)
-	case MSG_TYPE_BROADCAST:
-		SendBroadcastMsg(msg)
 	case MSG_TYPE_NOTICE:
 		SendNoticeMsg(msg)
+	case MSG_TYPE_BROADCAST:
+		SendBroadcastMsg(msg)
+
 	}
 }
 
@@ -174,6 +179,8 @@ func SendMsg(msg *Message, toId uint64) {
 	if v, ok := manager.Clients.Load(toId); ok {
 		client := v.(*Client)
 		client.Message <- msg
+	} else {
+		StoreUnreadMessage(toId, msg)
 	}
 }
 
@@ -189,7 +196,13 @@ func SendGroupMsg(msg *Message) {
 	}
 }
 
-// 3 广播消息
+// 3 通知消息
+func SendNoticeMsg(msg *Message) {
+	log.Logger.Info(fmt.Sprintf("SendNoticeMsg: %v ", msg))
+	SendMsg(msg, msg.ToId)
+}
+
+// 4 广播消息
 func SendBroadcastMsg(msg *Message) {
 	manager.Clients.Range(func(k, v interface{}) bool {
 		client := v.(*Client)
@@ -199,12 +212,40 @@ func SendBroadcastMsg(msg *Message) {
 	})
 }
 
-// 4 通知消息
-func SendNoticeMsg(msg *Message) {
-	log.Logger.Info(fmt.Sprintf("SendNoticeMsg: %v ", msg))
-	// 将消息加入节点的消息队列
-	if v, ok := manager.Clients.Load(msg.ToId); ok {
-		client := v.(*Client)
-		client.Message <- msg
+func setSessionKey(uid uint64, sessionkey string) string {
+	rkey := model.RksessionKey(uid)
+	utils.RDB.Set(context.TODO(), rkey, sessionkey, time.Minute*time.Duration(0))
+	utils.RDB.ExpireAt(context.TODO(), rkey, time.Now().Add(time.Minute*60*24*2))
+	return sessionkey
+}
+
+func getSessionKey(uid uint64) string {
+	rkey := model.RksessionKey(uid)
+	sessionkey, err := utils.RDB.Get(context.TODO(), rkey).Result()
+	if err != nil {
+		log.Logger.Info(fmt.Sprintf("%v", err))
 	}
+	return sessionkey
+}
+
+func checkSessionKey(c *gin.Context, uid uint64) {
+	sessionKey := ""
+	session, _ := c.Request.Cookie("sessionKey")
+	if session != nil {
+		sessionKey = session.Value
+	}
+
+	oldSessionKey := getSessionKey(uid)
+	if oldSessionKey != "" {
+		if oldSessionKey != sessionKey {
+			if oldclient, ok := manager.Clients.Load(uid); ok {
+				log.Logger.Info(fmt.Sprintf("下线: %v", uid))
+				msg := &Message{FromId: uid, ToId: uid, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_OFFLINE_PACK, Content: &MessageContent{Data: "下线"}}
+				oldclient.(*Client).Message <- msg
+			}
+		}
+	} else {
+		setSessionKey(uid, sessionKey)
+	}
+
 }

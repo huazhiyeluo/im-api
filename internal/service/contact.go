@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"imapi/internal/model"
 	"imapi/internal/schema"
@@ -8,15 +9,21 @@ import (
 	"imapi/internal/utils"
 	"imapi/third_party/log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 // 1、联系人列表
-func GetContactList(c *gin.Context) {
+func GetFriendList(c *gin.Context) {
 
 	data := make(map[string]interface{})
 	c.Bind(&data)
+
+	if _, ok := data["fromId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
 
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 	contacts, err := model.GetContactList(fromId, 1)
@@ -28,7 +35,7 @@ func GetContactList(c *gin.Context) {
 	for _, v := range contacts {
 		toIds = append(toIds, v.ToId)
 	}
-	toUsers, err := model.GetUserByUids(toIds)
+	toUsers, err := model.FindUserByUids(toIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -37,16 +44,9 @@ func GetContactList(c *gin.Context) {
 	for _, v := range toUsers {
 		tempToUsers[v.Uid] = v
 	}
-	onlines := server.CheckUserOnlineStatus(toIds)
-
 	var dataUsers []*schema.ResFriend
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResFriend{
-			Uid:      v.ToId,
-			Username: tempToUsers[v.ToId].Username,
-			Avatar:   tempToUsers[v.ToId].Avatar,
-			IsOnline: onlines[v.ToId],
-		})
+		dataUsers = append(dataUsers, getResUser(tempToUsers[v.ToId]))
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -59,7 +59,10 @@ func GetGroupList(c *gin.Context) {
 
 	data := make(map[string]interface{})
 	c.Bind(&data)
-
+	if _, ok := data["fromId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 	contacts, err := model.GetContactList(fromId, 2)
 	if err != nil {
@@ -67,11 +70,18 @@ func GetGroupList(c *gin.Context) {
 		return
 	}
 
+	var dataUsers []*schema.ResGroup
+	if len(contacts) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code": 0,
+			"data": dataUsers,
+		})
+	}
 	toIds := []uint64{}
 	for _, v := range contacts {
 		toIds = append(toIds, v.ToId)
 	}
-	groups, err := model.GetGroupByGroupIds(toIds)
+	groups, err := model.FindGroupByGroupIds(toIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -81,14 +91,8 @@ func GetGroupList(c *gin.Context) {
 		tempGroups[v.GroupId] = v
 	}
 
-	var dataUsers []*schema.ResGroup
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResGroup{
-			GroupId: v.ToId,
-			Name:    tempGroups[v.ToId].Name,
-			Icon:    tempGroups[v.ToId].Icon,
-			Info:    tempGroups[v.ToId].Info,
-		})
+		dataUsers = append(dataUsers, getResGroup(tempGroups[v.ToId]))
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -113,7 +117,7 @@ func GetGroupUser(c *gin.Context) {
 		fromIds = append(fromIds, v.FromId)
 	}
 
-	toUsers, err := model.GetUserByUids(fromIds)
+	toUsers, err := model.FindUserByUids(fromIds)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -122,19 +126,10 @@ func GetGroupUser(c *gin.Context) {
 	for _, v := range toUsers {
 		tempToUsers[v.Uid] = v
 	}
-
-	onlines := server.CheckUserOnlineStatus(fromIds)
-
 	var dataUsers []*schema.ResFriend
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, &schema.ResFriend{
-			Uid:      v.ToId,
-			Username: tempToUsers[v.ToId].Username,
-			Avatar:   tempToUsers[v.ToId].Avatar,
-			IsOnline: onlines[v.ToId],
-		})
+		dataUsers = append(dataUsers, getResUser(tempToUsers[v.FromId]))
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": dataUsers,
@@ -150,133 +145,110 @@ func AddFriend(c *gin.Context) {
 	toId := uint64(utils.ToNumber(data["toId"]))
 	reason := utils.ToString(data["reason"])
 
-	user, err := model.FindUserByUid(toId)
+	if fromId == 0 || toId == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "参数错误"})
+	}
+
+	if fromId == toId {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "不允许添加自己"})
+		return
+	}
+
+	fromUser, err := model.FindUserByUid(fromId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
-	if user.Uid == 0 {
+	if fromUser.Uid == 0 {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
 		return
 	}
 
-	insertApplyContactData := &model.ApplyContact{
-		FromId: fromId,
-		ToId:   toId,
-		Type:   1,
-		Reason: reason,
-	}
-	applyContact, err := model.CreateApplyContact(insertApplyContactData)
+	toUser, err := model.FindUserByUid(toId)
 	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if toUser.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
+		return
+	}
+
+	cantact, err := model.GetGroupContactOne(fromId, toId, 1)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if cantact.Id != 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经是好友"})
+		return
+	}
+
+	insertApplyData := &model.Apply{
+		FromId:      fromId,
+		ToId:        toId,
+		Type:        1,
+		Reason:      reason,
+		OperateTime: time.Now().Unix(),
+	}
+	apply, err := model.CreateApply(insertApplyData)
+	if err != nil {
+		log.Logger.Info(fmt.Sprintf("%v", apply))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
-	go server.UserFriendNoticeMsg(applyContact.FromId, applyContact.ToId, server.MSG_MEDIA_FRIEND_ADD)
+	//应用数据处理
+	tempApply := getResApplyUser(apply, fromUser, toUser)
+
+	toMap := make(map[string]interface{})
+	toMap["apply"] = tempApply
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserFriendNoticeMsg(apply.FromId, apply.ToId, string(toMapStr), server.MSG_MEDIA_FRIEND_ADD)
+
+	fromMap := make(map[string]interface{})
+	fromMap["apply"] = tempApply
+	fromMapStr, _ := json.Marshal(fromMap)
+	go server.UserFriendNoticeMsg(apply.ToId, apply.FromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_ADD)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 	})
 
-}
-
-// 4-2、同意添加好友
-func AgreeFriend(c *gin.Context) {
-	data := make(map[string]interface{})
-	c.Bind(&data)
-
-	id := uint32(utils.ToNumber(data["id"]))
-	applyContact, err := model.FindApplyById(id)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	if applyContact.Id == 0 || applyContact.Status != 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "申请状态错误"})
-		return
-	}
-	applyContact.Status = 1
-	applyContact, err = model.UpdateApplyContact(applyContact)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 3, "msg": "操作错误"})
-		return
-	}
-
-	insertContachData := &model.Contact{
-		FromId: applyContact.FromId,
-		ToId:   applyContact.ToId,
-		Type:   1,
-		Remark: "",
-	}
-	contact, err := model.CreateContact(insertContachData)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", contact))
-		c.JSON(http.StatusOK, gin.H{"code": 4, "msg": "操作错误"})
-		return
-	}
-
-	insertFriendContactData := &model.Contact{
-		FromId: applyContact.ToId,
-		ToId:   applyContact.FromId,
-		Type:   1,
-		Remark: "",
-	}
-	contact, err = model.CreateContact(insertFriendContactData)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", contact))
-		c.JSON(http.StatusOK, gin.H{"code": 5, "msg": "操作错误"})
-		return
-	}
-
-	go server.UserFriendNoticeMsg(applyContact.ToId, applyContact.FromId, server.MSG_MEDIA_FRIEND_AGREE)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-	})
-}
-
-// 4-3、拒绝添加好友
-func RefuseFriend(c *gin.Context) {
-	data := make(map[string]interface{})
-	c.Bind(&data)
-
-	id := uint32(utils.ToNumber(data["id"]))
-	applyContact, err := model.FindApplyById(id)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	if applyContact.Id == 0 || applyContact.Status != 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "申请状态错误"})
-		return
-	}
-	applyContact.Status = 2
-	applyContact, err = model.UpdateApplyContact(applyContact)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 3, "msg": "操作错误"})
-		return
-	}
-
-	go server.UserFriendNoticeMsg(applyContact.ToId, applyContact.FromId, server.MSG_MEDIA_FRIEND_REFUSE)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-	})
 }
 
 // 4-4、删除好友
-func DeleteFriend(c *gin.Context) {
+func DelFriend(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 	toId := uint64(utils.ToNumber(data["toId"]))
+
+	if fromId == 0 || toId == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "参数错误"})
+		return
+	}
+
+	fromUser, err := model.FindUserByUid(fromId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if fromUser.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
+		return
+	}
+
+	toUser, err := model.FindUserByUid(toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if toUser.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
+		return
+	}
+
 	contact, err := model.DeleteContact(fromId, toId, 1)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v", contact))
@@ -289,7 +261,16 @@ func DeleteFriend(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
-	go server.UserFriendNoticeMsg(fromId, toId, server.MSG_MEDIA_FRIEND_DELETE)
+
+	toMap := make(map[string]interface{})
+	toMap["user"] = getResUser(fromUser)
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserFriendNoticeMsg(fromId, toId, string(toMapStr), server.MSG_MEDIA_FRIEND_DELETE)
+
+	fromMap := make(map[string]interface{})
+	fromMap["user"] = getResUser(toUser)
+	fromMapStr, _ := json.Marshal(fromMap)
+	go server.UserFriendNoticeMsg(toId, fromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_DELETE)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -305,6 +286,16 @@ func JoinGroup(c *gin.Context) {
 	toId := uint64(utils.ToNumber(data["toId"]))
 	reason := utils.ToString(data["reason"])
 
+	fromUser, err := model.FindUserByUid(fromId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if fromUser.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
+		return
+	}
+
 	group, err := model.FindGroupByGroupId(toId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
@@ -315,120 +306,63 @@ func JoinGroup(c *gin.Context) {
 		return
 	}
 
-	insertApplyContactData := &model.ApplyContact{
-		FromId: fromId,
-		ToId:   toId,
-		Type:   2,
-		Reason: reason,
-	}
-	applyContact, err := model.CreateApplyContact(insertApplyContactData)
+	cantact, err := model.GetGroupContactOne(fromId, toId, 2)
 	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if cantact.Id != 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经在群里"})
+		return
+	}
+
+	insertApplyData := &model.Apply{
+		FromId:      fromId,
+		ToId:        toId,
+		Type:        2,
+		Reason:      reason,
+		OperateTime: time.Now().Unix(),
+	}
+	apply, err := model.CreateApply(insertApplyData)
+	if err != nil {
+		log.Logger.Info(fmt.Sprintf("%v", apply))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
-	go server.UserFriendNoticeMsg(applyContact.FromId, group.OwnerUid, server.MSG_MEDIA_GROUP_JOIN)
+	//应用数据处理
+	tempApply := getResApplyGroup(apply, fromUser, group)
+
+	toMap := make(map[string]interface{})
+	toMap["apply"] = tempApply
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserFriendNoticeMsg(apply.FromId, group.OwnerUid, string(toMapStr), server.MSG_MEDIA_GROUP_JOIN)
+
+	fromMap := make(map[string]interface{})
+	fromMap["apply"] = tempApply
+	fromMapStr, _ := json.Marshal(fromMap)
+	go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_JOIN)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 	})
 
-}
-
-// 5-2、同意加入群组
-func AgreeJoinGroup(c *gin.Context) {
-	data := make(map[string]interface{})
-	c.Bind(&data)
-
-	id := uint32(utils.ToNumber(data["id"]))
-	applyContact, err := model.FindApplyById(id)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	if applyContact.Id == 0 || applyContact.Status != 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "申请状态错误"})
-		return
-	}
-
-	insertContachData := &model.Contact{
-		FromId: applyContact.FromId,
-		ToId:   applyContact.ToId,
-		Type:   2,
-		Remark: "",
-	}
-	contact, err := model.CreateContact(insertContachData)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", contact))
-		c.JSON(http.StatusOK, gin.H{"code": 3, "msg": "操作错误"})
-		return
-	}
-
-	group, err := model.FindGroupByGroupId(applyContact.ToId)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	go server.UserFriendNoticeMsg(group.OwnerUid, applyContact.FromId, server.MSG_MEDIA_GROUP_AGREE)
-	go server.UserGroupNoticeMsg(applyContact.ToId, server.MSG_MEDIA_GROUP_AGREE)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-	})
-}
-
-// 5-3、拒绝加入群组
-func RefuseJoinGroup(c *gin.Context) {
-	data := make(map[string]interface{})
-	c.Bind(&data)
-
-	id := uint32(utils.ToNumber(data["id"]))
-	applyContact, err := model.FindApplyById(id)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	if applyContact.Id == 0 || applyContact.Status != 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "申请状态错误"})
-		return
-	}
-	applyContact.Status = 2
-	applyContact, err = model.UpdateApplyContact(applyContact)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", applyContact))
-		c.JSON(http.StatusOK, gin.H{"code": 3, "msg": "操作错误"})
-		return
-	}
-
-	group, err := model.FindGroupByGroupId(applyContact.ToId)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	go server.UserFriendNoticeMsg(group.OwnerUid, applyContact.FromId, server.MSG_MEDIA_GROUP_REFUSE)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-	})
 }
 
 // 5-4、群删除成员
-func DeleteJoinGroup(c *gin.Context) {
+func QuitGroup(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 	toId := uint64(utils.ToNumber(data["toId"]))
-	contact, err := model.DeleteContact(fromId, toId, 2)
+
+	fromUser, err := model.FindUserByUid(fromId)
 	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", contact))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if fromUser.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
 		return
 	}
 
@@ -438,7 +372,31 @@ func DeleteJoinGroup(c *gin.Context) {
 		return
 	}
 
-	go server.UserFriendNoticeMsg(group.OwnerUid, fromId, server.MSG_MEDIA_GROUP_DELETE)
+	group.Num = group.Num - 1
+	group, err = model.UpdateGroup(group)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	contact, err := model.DeleteContact(fromId, toId, 2)
+	if err != nil {
+		log.Logger.Info(fmt.Sprintf("%v", contact))
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	fromMap := make(map[string]interface{})
+	fromMap["user"] = getResUser(fromUser)
+	fromMap["group"] = getResGroup(group)
+	fromMapStr, _ := json.Marshal(fromMap)
+	go server.UserFriendNoticeMsg(group.OwnerUid, fromId, string(fromMapStr), server.MSG_MEDIA_GROUP_DELETE)
+
+	toMap := make(map[string]interface{})
+	toMap["user"] = getResUser(fromUser)
+	toMap["group"] = getResGroup(group)
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DELETE)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,

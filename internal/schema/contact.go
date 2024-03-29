@@ -8,9 +8,10 @@ type ResFriend struct {
 }
 
 type ResGroup struct {
-	GroupId uint64 // UID
-	Name    string // 用户名
-	Icon    string // 头像
-	Info    string //简介
-	Num     uint32 // 人数
+	GroupId  uint64 // 群ID
+	OwnerUid uint64 //	创建者
+	Name     string // 用户名
+	Icon     string // 头像
+	Info     string //	简介
+	Num      uint32 // 人数
 }

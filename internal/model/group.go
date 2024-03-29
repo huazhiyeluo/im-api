@@ -34,8 +34,8 @@ func DeleteGroup(groupId uint64) (*Group, error) {
 	return m, err
 }
 
-// 指定群
-func GetGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
+// 指定群(rows)
+func FindGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
 	m := &Group{}
 	var data []*Group
 	err := utils.DB.Table(m.TableName()).Where("group_id in ?", groupIds).Find(&data).Debug().Error
@@ -45,17 +45,28 @@ func GetGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
 	return data, err
 }
 
-// 查找群
-func FindGroupByGroupId(groupIds uint64) (*Group, error) {
+// 指定群(rows)
+func GetGroupByOwnerUid(ownerUid uint64) ([]*Group, error) {
 	m := &Group{}
-	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupIds).Find(m).Debug().Error
+	var data []*Group
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?", ownerUid).Find(&data).Debug().Error
+	if err != nil {
+		log.Print("GetGroupByOwnerUid", err)
+	}
+	return data, err
+}
+
+// 查找群(one)
+func FindGroupByGroupId(groupId uint64) (*Group, error) {
+	m := &Group{}
+	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupId).Find(m).Debug().Error
 	if err != nil {
 		log.Print("FindGroupByGroupId", err)
 	}
 	return m, err
 }
 
-// 查找用群
+// 查找用群(one)
 func FindGroupByName(name string) (*Group, error) {
 	m := &Group{}
 	err := utils.DB.Table(m.TableName()).Where("name = ?", name).Find(m).Debug().Error

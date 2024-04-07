@@ -19,16 +19,17 @@ const (
 	MSG_TYPE_SINGLE    = 1 // 单聊消息
 	MSG_TYPE_ROOM      = 2 // 群聊消息
 	MSG_TYPE_NOTICE    = 3 // 通知消息
-	MSG_TYPE_BROADCAST = 4 // 广播消息
-	MSG_TYPE_ACK       = 5 // 应答消息
+	MSG_TYPE_ACK       = 4 // 应答消息
+	MSG_TYPE_BROADCAST = 5 // 广播消息
 
 	// media（type 1|2） 消息展示样式
-	MSG_MEDIA_TEXT  = 1 // 文本
-	MSG_MEDIA_IMAGE = 2 // 图片
-	MSG_MEDIA_AUDIO = 3 // 音频
-	MSG_MEDIA_VIDEO = 4 // 视频
-	MSG_MEDIA_FILE  = 5 // 文件
-	MSG_MEDIA_EMOJI = 6 // 表情
+	MSG_MEDIA_TEXT   = 1 // 文本
+	MSG_MEDIA_IMAGE  = 2 // 图片
+	MSG_MEDIA_AUDIO  = 3 // 音频
+	MSG_MEDIA_VIDEO  = 4 // 视频
+	MSG_MEDIA_FILE   = 5 // 文件
+	MSG_MEDIA_EMOJI  = 6 // 表情
+	MSG_MEDIA_STATUS = 7 // 不在线
 
 	// media（type 4） 消息展示样式
 	MSG_MEDIA_OFFLINE_PACK = 10 // 挤下线
@@ -45,6 +46,13 @@ const (
 	MSG_MEDIA_GROUP_AGREE  = 32 // 成功添加群
 	MSG_MEDIA_GROUP_REFUSE = 33 // 拒绝添加群
 	MSG_MEDIA_GROUP_DELETE = 34 // 退出群
+
+	MSG_MEDIA_PHONE_CONTACT = 0 // 发起聊天
+	MSG_MEDIA_PHONE_QUIT    = 1 // 退出聊天
+	MSG_MEDIA_PHONE_OPEN    = 2 // 接通聊天
+	MSG_MEDIA_PHONE_ICE     = 3 // ICE候选
+	MSG_MEDIA_PHONE_OFFER   = 4 // offer
+	MSG_MEDIA_PHONE_ANSWER  = 5 // answer
 )
 
 var upgrader = websocket.Upgrader{
@@ -157,9 +165,10 @@ func Dispatch(msg *Message) {
 		SendGroupMsg(msg)
 	case MSG_TYPE_NOTICE:
 		SendNoticeMsg(msg)
+	case MSG_TYPE_ACK:
+		SendAckMsg(msg)
 	case MSG_TYPE_BROADCAST:
 		SendBroadcastMsg(msg)
-
 	}
 }
 
@@ -202,7 +211,21 @@ func SendNoticeMsg(msg *Message) {
 	SendMsg(msg, msg.ToId)
 }
 
-// 4 广播消息
+// 4 应答消息
+func SendAckMsg(msg *Message) {
+	log.Logger.Info(fmt.Sprintf("SendAckMsg: %v ", msg))
+	// 将消息加入节点的消息队列
+	if v, ok := manager.Clients.Load(msg.ToId); ok {
+		client := v.(*Client)
+		client.Message <- msg
+	} else {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{0, 2}) {
+			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_STATUS, Content: &MessageContent{Data: "对方不在线"}})
+		}
+	}
+}
+
+// 5 广播消息
 func SendBroadcastMsg(msg *Message) {
 	manager.Clients.Range(func(k, v interface{}) bool {
 		client := v.(*Client)

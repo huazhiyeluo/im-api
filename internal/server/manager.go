@@ -47,6 +47,8 @@ func (m *Manager) Start() {
 			m.UnRegisterClient(client)
 		case msg := <-m.Message:
 			// 处理接收到的消息
+			jsonData, _ := json.Marshal(msg)
+			log.Logger.Info(fmt.Sprintf("Start %v", string(jsonData)))
 			msg.CreateTime = time.Now().Unix()
 			m.StoreData(msg)
 			Dispatch(msg)
@@ -73,7 +75,8 @@ func (m *Manager) UnRegisterClient(client *Client) {
 
 // 消息存贮
 func (m *Manager) StoreData(msg *Message) {
-	fmt.Println("StoreData", msg)
+	jsonData, _ := json.Marshal(msg)
+	log.Logger.Info(fmt.Sprintf("StoreData %v", string(jsonData)))
 	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3}) {
 		return
 	}
@@ -176,7 +179,8 @@ func StoreUnreadRedisMessage(uid uint64, msg *Message) {
 
 // 设置创建通知
 func CreateMsg(msg *Message) {
-	log.Logger.Info(fmt.Sprintf("CreateNoticeMsg %v", msg))
+	jsonData, _ := json.Marshal(msg)
+	log.Logger.Info(fmt.Sprintf("CreateMsg %v", string(jsonData)))
 	manager.Message <- msg
 }
 

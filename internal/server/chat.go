@@ -30,6 +30,7 @@ const (
 	MSG_MEDIA_FILE   = 5 // 文件
 	MSG_MEDIA_EMOJI  = 6 // 表情
 	MSG_MEDIA_STATUS = 7 // 不在线
+	MSG_MEDIA_TIMES  = 8 // 通话时长
 
 	// media（type 4） 消息展示样式
 	MSG_MEDIA_OFFLINE_PACK = 10 // 挤下线

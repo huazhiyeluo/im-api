@@ -1,8 +1,10 @@
 package service
 
 import (
+	"encoding/json"
 	"imapi/internal/model"
 	"imapi/internal/schema"
+	"imapi/internal/server"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +35,12 @@ func EditUser(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
+
+	toMap := make(map[string]interface{})
+	toMap["user"] = getResUser(user)
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserInfoNoticeMsg(data.Uid, string(toMapStr))
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": user,

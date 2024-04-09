@@ -49,6 +49,7 @@ func (m *Manager) Start() {
 			// 处理接收到的消息
 			jsonData, _ := json.Marshal(msg)
 			log.Logger.Info(fmt.Sprintf("Start %v", string(jsonData)))
+			msg.Id = utils.GenGUID()
 			msg.CreateTime = time.Now().Unix()
 			m.StoreData(msg)
 			Dispatch(msg)
@@ -77,11 +78,16 @@ func (m *Manager) UnRegisterClient(client *Client) {
 func (m *Manager) StoreData(msg *Message) {
 	jsonData, _ := json.Marshal(msg)
 	log.Logger.Info(fmt.Sprintf("StoreData %v", string(jsonData)))
-	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3}) {
+	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3, 4}) {
 		return
 	}
 	if utils.IsContainUint32(msg.MsgType, []uint32{3}) {
 		if utils.IsContainUint32(msg.MsgMedia, []uint32{10, 11, 12}) {
+			return
+		}
+	}
+	if utils.IsContainUint32(msg.MsgType, []uint32{4}) {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{3, 4, 5}) {
 			return
 		}
 	}
@@ -91,6 +97,7 @@ func (m *Manager) StoreData(msg *Message) {
 	content, _ := json.Marshal(msg.Content)
 
 	go model.CreateMessage(&model.Message{
+		Id:         msg.Id,
 		FromId:     msg.FromId,
 		ToId:       msg.ToId,
 		MsgType:    msg.MsgType,
@@ -147,17 +154,10 @@ func StoreUnreadMessage(uid uint64, msg *Message) {
 		}
 	}
 	StoreUnreadRedisMessage(uid, msg)
-
-	content, _ := json.Marshal(msg.Content)
 	go model.CreateMessageUnread(&model.MessageUnread{
 		Uid:        uid,
-		FromId:     msg.FromId,
-		ToId:       msg.ToId,
-		MsgType:    msg.MsgType,
-		MsgMedia:   msg.MsgMedia,
-		Content:    string(content),
+		MsgId:      msg.Id,
 		CreateTime: msg.CreateTime,
-		Status:     msg.Status,
 	})
 }
 func StoreUnreadRedisMessage(uid uint64, msg *Message) {
@@ -232,17 +232,33 @@ func PushUnreadMessage(uid uint64) {
 		if err != nil {
 			log.Logger.Info(fmt.Sprintf("PushUnreadMessage %v", err))
 		}
+		ids := []string{}
 		for _, v := range temps {
+			ids = append(ids, v.MsgId)
+		}
+		msgs, err := model.GetMessageAll(ids)
+		if err != nil {
+			log.Logger.Info(fmt.Sprintf("PushUnreadMessage %v", err))
+		}
+		msgMaps := make(map[string]*model.Message)
+		for _, v := range msgs {
+			msgMaps[v.Id] = v
+		}
+
+		for _, v := range temps {
+			if _, ok := msgMaps[v.MsgId]; !ok {
+				continue
+			}
 			content := &MessageContent{}
-			json.Unmarshal([]byte(v.Content), content)
+			json.Unmarshal([]byte(msgMaps[v.MsgId].Content), content)
 			msg := &Message{
-				FromId:     v.FromId,
-				ToId:       v.ToId,
-				MsgType:    v.MsgType,
-				MsgMedia:   v.MsgMedia,
+				FromId:     msgMaps[v.MsgId].FromId,
+				ToId:       msgMaps[v.MsgId].ToId,
+				MsgType:    msgMaps[v.MsgId].MsgType,
+				MsgMedia:   msgMaps[v.MsgId].MsgMedia,
 				Content:    content,
-				CreateTime: v.CreateTime,
-				Status:     v.Status,
+				CreateTime: msgMaps[v.MsgId].CreateTime,
+				Status:     msgMaps[v.MsgId].Status,
 			}
 			CreateMsg(msg)
 		}

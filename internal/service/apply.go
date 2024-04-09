@@ -231,7 +231,6 @@ func OperateApply(c *gin.Context) {
 
 			fromUser, _ := model.FindUserByUid(apply.FromId)
 			toUser, _ := model.FindUserByUid(apply.ToId)
-
 			tempApply := getResApplyUser(apply, fromUser, toUser)
 
 			fromMap := make(map[string]interface{})

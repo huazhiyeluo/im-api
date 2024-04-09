@@ -33,6 +33,15 @@ func FindApplyById(id uint32) (*Apply, error) {
 	return m, err
 }
 
+func FindApplyByTwoId(fromId uint64, toId uint64) (*Apply, error) {
+	m := &Apply{}
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ? and status = ?", fromId, toId, 0).Find(m).Debug().Error
+	if err != nil {
+		log.Print("FindApplyByTwoId", err)
+	}
+	return m, err
+}
+
 // 获取好友申请信息
 func GetFriendApplyList(uid uint64) ([]*Apply, error) {
 	m := &Apply{}

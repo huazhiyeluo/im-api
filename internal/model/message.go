@@ -39,6 +39,20 @@ func GetMessageList(pageSize uint32, pageNum uint32, toId uint64, msgType uint32
 	return data, count, err
 }
 
+func GetMessageAll(ids []string) ([]*Message, error) {
+	m := &Message{}
+	var data []*Message
+
+	db := utils.DB.Table(m.TableName())
+	db.Where("id in ?", ids)
+
+	err := db.Order("create_time asc").Find(&data).Error
+	if err != nil {
+		log.Print("GetMessageList", err)
+	}
+	return data, err
+}
+
 //-------------------------------------------------------------------MessageUnread--------------------------------------------------------------------
 
 // 创建未读消息

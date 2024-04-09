@@ -184,6 +184,26 @@ func AddFriend(c *gin.Context) {
 		return
 	}
 
+	apply, err := model.FindApplyByTwoId(fromId, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if apply.Id != 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经申请过了，请等待"})
+		return
+	}
+
+	apply, err = model.FindApplyByTwoId(toId, fromId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if apply.Id != 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "对方申请你为好友，请通过"})
+		return
+	}
+
 	insertApplyData := &model.Apply{
 		FromId:      fromId,
 		ToId:        toId,
@@ -191,7 +211,7 @@ func AddFriend(c *gin.Context) {
 		Reason:      reason,
 		OperateTime: time.Now().Unix(),
 	}
-	apply, err := model.CreateApply(insertApplyData)
+	apply, err = model.CreateApply(insertApplyData)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v", apply))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
@@ -316,6 +336,16 @@ func JoinGroup(c *gin.Context) {
 		return
 	}
 
+	apply, err := model.FindApplyByTwoId(fromId, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if apply.Id != 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经申请过了，请等待"})
+		return
+	}
+
 	insertApplyData := &model.Apply{
 		FromId:      fromId,
 		ToId:        toId,
@@ -323,7 +353,7 @@ func JoinGroup(c *gin.Context) {
 		Reason:      reason,
 		OperateTime: time.Now().Unix(),
 	}
-	apply, err := model.CreateApply(insertApplyData)
+	apply, err = model.CreateApply(insertApplyData)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v", apply))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
@@ -349,7 +379,7 @@ func JoinGroup(c *gin.Context) {
 
 }
 
-// 5-4、群删除成员
+// 5-4、群删除成员|群解散
 func QuitGroup(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
@@ -372,31 +402,48 @@ func QuitGroup(c *gin.Context) {
 		return
 	}
 
-	group.Num = group.Num - 1
-	group, err = model.UpdateGroup(group)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
+	if group.OwnerUid == fromId {
+
+		toMap := make(map[string]interface{})
+		toMap["group"] = getResGroup(group)
+		toMapStr, _ := json.Marshal(toMap)
+		go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DISBAND)
+
+		group, err := model.DeleteGroup(toId)
+		if err != nil {
+			log.Logger.Info(fmt.Sprintf("%v", group))
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+			return
+		}
+
+		contact, err := model.DeleteContactGroup(toId)
+		if err != nil {
+			log.Logger.Info(fmt.Sprintf("%v", contact))
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+			return
+		}
+
+	} else {
+		group.Num = group.Num - 1
+		group, err = model.UpdateGroup(group)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+			return
+		}
+
+		toMap := make(map[string]interface{})
+		toMap["user"] = getResUser(fromUser)
+		toMap["group"] = getResGroup(group)
+		toMapStr, _ := json.Marshal(toMap)
+		go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DELETE)
+
+		contact, err := model.DeleteContact(fromId, toId, 2)
+		if err != nil {
+			log.Logger.Info(fmt.Sprintf("%v", contact))
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+			return
+		}
 	}
-
-	contact, err := model.DeleteContact(fromId, toId, 2)
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", contact))
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-
-	fromMap := make(map[string]interface{})
-	fromMap["user"] = getResUser(fromUser)
-	fromMap["group"] = getResGroup(group)
-	fromMapStr, _ := json.Marshal(fromMap)
-	go server.UserFriendNoticeMsg(group.OwnerUid, fromId, string(fromMapStr), server.MSG_MEDIA_GROUP_DELETE)
-
-	toMap := make(map[string]interface{})
-	toMap["user"] = getResUser(fromUser)
-	toMap["group"] = getResGroup(group)
-	toMapStr, _ := json.Marshal(toMap)
-	go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DELETE)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,

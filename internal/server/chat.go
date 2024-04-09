@@ -23,16 +23,17 @@ const (
 	MSG_TYPE_BROADCAST = 5 // 广播消息
 
 	// media（type 1|2） 消息展示样式
-	MSG_MEDIA_TEXT   = 1 // 文本
-	MSG_MEDIA_IMAGE  = 2 // 图片
-	MSG_MEDIA_AUDIO  = 3 // 音频
-	MSG_MEDIA_VIDEO  = 4 // 视频
-	MSG_MEDIA_FILE   = 5 // 文件
-	MSG_MEDIA_EMOJI  = 6 // 表情
-	MSG_MEDIA_STATUS = 7 // 不在线
-	MSG_MEDIA_TIMES  = 8 // 通话时长
+	MSG_MEDIA_TEXT       = 1  // 文本
+	MSG_MEDIA_IMAGE      = 2  // 图片
+	MSG_MEDIA_AUDIO      = 3  // 音频
+	MSG_MEDIA_VIDEO      = 4  // 视频
+	MSG_MEDIA_FILE       = 5  // 文件
+	MSG_MEDIA_EMOJI      = 6  // 表情
+	MSG_MEDIA_NOT_ONLINE = 10 // 不在线
+	MSG_MEDIA_NO_CONNECT = 11 // 未接通
+	MSG_MEDIA_TIMES      = 12 // 通话时长
 
-	// media（type 4） 消息展示样式
+	// media（type 3） 消息展示样式
 	MSG_MEDIA_OFFLINE_PACK = 10 // 挤下线
 	MSG_MEDIA_ONLINE       = 11 // 上线
 	MSG_MEDIA_OFFLINE      = 12 // 下线
@@ -42,12 +43,14 @@ const (
 	MSG_MEDIA_FRIEND_REFUSE = 23 // 拒绝添加好友
 	MSG_MEDIA_FRIEND_DELETE = 24 // 删除好友
 
-	MSG_MEDIA_GROUP_CREATE = 30 // 创建群
-	MSG_MEDIA_GROUP_JOIN   = 31 // 添加群
-	MSG_MEDIA_GROUP_AGREE  = 32 // 成功添加群
-	MSG_MEDIA_GROUP_REFUSE = 33 // 拒绝添加群
-	MSG_MEDIA_GROUP_DELETE = 34 // 退出群
+	MSG_MEDIA_GROUP_CREATE  = 30 // 创建群
+	MSG_MEDIA_GROUP_JOIN    = 31 // 添加群
+	MSG_MEDIA_GROUP_AGREE   = 32 // 成功添加群
+	MSG_MEDIA_GROUP_REFUSE  = 33 // 拒绝添加群
+	MSG_MEDIA_GROUP_DELETE  = 34 // 退出群
+	MSG_MEDIA_GROUP_DISBAND = 35 // 解散群
 
+	// media（type 4） 消息展示样式
 	MSG_MEDIA_PHONE_CONTACT = 0 // 发起聊天
 	MSG_MEDIA_PHONE_QUIT    = 1 // 退出聊天
 	MSG_MEDIA_PHONE_OPEN    = 2 // 接通聊天
@@ -78,6 +81,7 @@ type MessageContent struct {
 }
 
 type Message struct {
+	Id         string          // ID
 	FromId     uint64          // ID [主]
 	ToId       uint64          // ID [从]
 	MsgType    uint32          // 消息类型 1私信 2群 3广播 4通知
@@ -221,7 +225,9 @@ func SendAckMsg(msg *Message) {
 		client.Message <- msg
 	} else {
 		if utils.IsContainUint32(msg.MsgMedia, []uint32{0, 2}) {
-			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_STATUS, Content: &MessageContent{Data: "对方不在线"}})
+			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NOT_ONLINE, Content: &MessageContent{Data: "对方不在线"}})
+			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_QUIT, Content: &MessageContent{Data: ""}})
+			go CreateMsg(&Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NO_CONNECT, Content: &MessageContent{Data: "呼叫未接通"}})
 		}
 	}
 }

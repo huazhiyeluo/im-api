@@ -55,3 +55,13 @@ func DeleteContact(fromId uint64, toId uint64, ttype uint32) (*Contact, error) {
 	}
 	return m, err
 }
+
+// 删除关联
+func DeleteContactGroup(toId uint64) (*Contact, error) {
+	m := &Contact{}
+	err := utils.DB.Table(m.TableName()).Where("to_id = ? and type = ?", toId, 2).Delete(m).Error
+	if err != nil {
+		log.Print("DeleteContact", err)
+	}
+	return m, err
+}

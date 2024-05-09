@@ -28,11 +28,11 @@ func getResApplyGroup(apply *model.Apply, fromUser *model.User, toGroup *model.G
 
 func getResUser(user *model.User) *schema.ResFriend {
 	onlines := server.CheckUserOnlineStatus([]uint64{user.Uid})
-	tempFriend := &schema.ResFriend{Uid: user.Uid, Username: user.Username, Avatar: user.Avatar, IsOnline: onlines[user.Uid]}
+	tempFriend := &schema.ResFriend{Uid: user.Uid, Username: user.Username, Avatar: user.Avatar, IsOnline: onlines[user.Uid], ContactGroupId: 0, Remark: user.Username}
 	return tempFriend
 }
 
 func getResGroup(group *model.Group) *schema.ResGroup {
-	tempGroup := &schema.ResGroup{GroupId: group.GroupId, OwnerUid: group.OwnerUid, Name: group.Name, Icon: group.Icon, Info: group.Info, Num: group.Num}
+	tempGroup := &schema.ResGroup{GroupId: group.GroupId, OwnerUid: group.OwnerUid, Name: group.Name, Icon: group.Icon, Info: group.Info, Num: group.Num, Remark: group.Name}
 	return tempGroup
 }

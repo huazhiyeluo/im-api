@@ -34,7 +34,7 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":  0,
 		"token": token,
-		"data":  user,
+		"data":  schema.GetUser(user),
 	})
 }
 
@@ -56,9 +56,13 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
+
+	token := setToken(user.Uid)
+
 	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-		"data": user,
+		"code":  0,
+		"token": token,
+		"data":  schema.GetUser(user),
 	})
 }
 

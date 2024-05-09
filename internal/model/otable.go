@@ -33,15 +33,27 @@ func (m *Group) TableName() string {
 
 // 联系人表
 type Contact struct {
-	Id     uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
-	FromId uint64 `gorm:"column:from_id;default:0"`             // ID [主]
-	ToId   uint64 `gorm:"column:to_id;default:0"`               // ID [从]
-	Type   uint32 `gorm:"column:type;default:0"`                // 联系人类型 1用户 2群
-	Remark string `gorm:"column:remark;NOT NULL"`               // 备注
+	Id             uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	FromId         uint64 `gorm:"column:from_id;default:0"`             // ID [主]
+	ToId           uint64 `gorm:"column:to_id;default:0"`               // ID [从]
+	Type           uint32 `gorm:"column:type;default:0"`                // 联系人类型 1用户 2群
+	ContactGroupId uint32 `gorm:"column:contact_group_id;default:0"`    // 联系人类型 1用户 2群
+	Remark         string `gorm:"column:remark;NOT NULL"`               // 备注
 }
 
 func (m *Contact) TableName() string {
 	return "qqim.contact"
+}
+
+// 联系人分组表
+type ContactGroup struct {
+	ContactGroupId uint32 `gorm:"column:contact_group_id;primary_key;AUTO_INCREMENT"` // ID
+	OwnerUid       uint64 `gorm:"column:owner_uid;default:0"`                         // 拥有者
+	Name           string `gorm:"column:name;NOT NULL"`                               // 名称
+}
+
+func (m *ContactGroup) TableName() string {
+	return "qqim.contact_group"
 }
 
 // 消息表

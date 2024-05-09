@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 1、联系人列表
+// 1-1、联系人列表
 func GetFriendList(c *gin.Context) {
 
 	data := make(map[string]interface{})
@@ -46,11 +46,41 @@ func GetFriendList(c *gin.Context) {
 	}
 	var dataUsers []*schema.ResFriend
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, getResUser(tempToUsers[v.ToId]))
+		temp := getResUser(tempToUsers[v.ToId])
+		temp.ContactGroupId = v.ContactGroupId
+		temp.Remark = v.Remark
+		dataUsers = append(dataUsers, temp)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": dataUsers,
+	})
+}
+
+// 1-2、联系人组
+func GetContactGroup(c *gin.Context) {
+
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["ownUid"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
+
+	ownUid := uint32(utils.ToNumber(data["ownUid"]))
+	contactGroups, err := model.GetContactGroup(ownUid)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		return
+	}
+	var dataContactGroups []*schema.ResContactGroup
+	for _, v := range contactGroups {
+		dataContactGroups = append(dataContactGroups, &schema.ResContactGroup{ContactGroupId: v.ContactGroupId, OwnerUid: v.OwnerUid, Name: v.Name})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": dataContactGroups,
 	})
 }
 
@@ -92,7 +122,9 @@ func GetGroupList(c *gin.Context) {
 	}
 
 	for _, v := range contacts {
-		dataUsers = append(dataUsers, getResGroup(tempGroups[v.ToId]))
+		temp := getResGroup(tempGroups[v.ToId])
+		temp.Remark = v.Remark
+		dataUsers = append(dataUsers, temp)
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -184,7 +216,7 @@ func AddFriend(c *gin.Context) {
 		return
 	}
 
-	apply, err := model.FindApplyByTwoId(fromId, toId)
+	apply, err := model.FindApplyByTwoId(fromId, toId, 1)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -194,7 +226,7 @@ func AddFriend(c *gin.Context) {
 		return
 	}
 
-	apply, err = model.FindApplyByTwoId(toId, fromId)
+	apply, err = model.FindApplyByTwoId(toId, fromId, 1)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -336,7 +368,7 @@ func JoinGroup(c *gin.Context) {
 		return
 	}
 
-	apply, err := model.FindApplyByTwoId(fromId, toId)
+	apply, err := model.FindApplyByTwoId(fromId, toId, 2)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return

@@ -15,6 +15,8 @@ func Router() *gin.Engine {
 	r.POST("/user/login", service.Login)
 	r.POST("/user/register", service.Register)
 
+	r.POST("/user/getContactGroup", service.GetContactGroup)
+
 	r.POST("/user/getFriendList", service.GetFriendList)
 	r.POST("/user/getGroupList", service.GetGroupList)
 	r.POST("/user/getGroupUser", service.GetGroupUser)

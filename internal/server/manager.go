@@ -203,13 +203,13 @@ func CleanConnection() {
 }
 
 // 用户在线状态检查
-func CheckUserOnlineStatus(uids []uint64) map[uint64]bool {
-	res := make(map[uint64]bool)
+func CheckUserOnlineStatus(uids []uint64) map[uint64]uint32 {
+	res := make(map[uint64]uint32)
 	for _, uid := range uids {
 		if _, ok := manager.Clients.Load(uid); ok {
-			res[uid] = true
+			res[uid] = 1
 		} else {
-			res[uid] = false
+			res[uid] = 0
 		}
 	}
 	return res

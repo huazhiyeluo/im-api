@@ -33,9 +33,9 @@ func FindApplyById(id uint32) (*Apply, error) {
 	return m, err
 }
 
-func FindApplyByTwoId(fromId uint64, toId uint64) (*Apply, error) {
+func FindApplyByTwoId(fromId uint64, toId uint64, ttype uint32) (*Apply, error) {
 	m := &Apply{}
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ? and status = ?", fromId, toId, 0).Find(m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?  and type = ? and status = ?", fromId, toId, ttype, 0).Find(m).Debug().Error
 	if err != nil {
 		log.Print("FindApplyByTwoId", err)
 	}

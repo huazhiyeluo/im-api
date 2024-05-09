@@ -77,20 +77,20 @@ type Client struct {
 }
 
 type MessageContent struct {
-	Data string //数据
-	Url  string //链接地址
-	Name string //文件名
+	Data string `json:"data"` //数据
+	Url  string `json:"url"`  //链接地址
+	Name string `json:"name"` //文件名
 }
 
 type Message struct {
-	Id         string          // ID
-	FromId     uint64          // ID [主]
-	ToId       uint64          // ID [从]
-	MsgType    uint32          // 消息类型 1私信 2群 3广播 4通知
-	MsgMedia   uint32          // 图片类型 1文字 2图片 3 音频 4 视频
-	Content    *MessageContent // 内容
-	CreateTime int64           // 创建时间
-	Status     uint32          // 状态
+	Id         string          `json:"id"`         // ID
+	FromId     uint64          `json:"fromId"`     // ID [主]
+	ToId       uint64          `json:"toId"`       // ID [从]
+	MsgType    uint32          `json:"msgType"`    // 消息类型 1私信 2群 3广播 4通知
+	MsgMedia   uint32          `json:"msgMedia"`   // 图片类型 1文字 2图片 3 音频 4 视频
+	Content    *MessageContent `json:"content"`    // 内容
+	CreateTime int64           `json:"createTime"` // 创建时间
+	Status     uint32          `json:"status"`     // 状态
 }
 
 func UpgradeWebSocket(c *gin.Context) (*websocket.Conn, error) {

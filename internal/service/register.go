@@ -1,0 +1,41 @@
+package service
+
+import (
+	"imapi/internal/model"
+	"imapi/internal/schema"
+	"imapi/internal/utils"
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+func Register(c *gin.Context) {
+	data := schema.Register{}
+	c.Bind(&data)
+	if data.Password != data.Repassword {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "密码和确认密码不一致"})
+		return
+	}
+	nowtime := time.Now().Unix()
+	insertData := &model.User{
+		Username:   data.Username,
+		Password:   utils.GenMd5(data.Password),
+		Email:      "",
+		Phone:      "",
+		CreateTime: nowtime,
+	}
+	user, err := model.CreateUser(insertData)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	token := setToken(user.Uid)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":  0,
+		"token": token,
+		"data":  schema.GetUser(user),
+	})
+}

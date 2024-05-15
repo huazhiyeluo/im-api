@@ -203,7 +203,7 @@ func SendMsg(msg *Message, toId uint64) {
 // 2 群消息
 func SendGroupMsg(msg *Message) {
 	log.Logger.Info(fmt.Sprintf("sendGroupMsg %v ", msg))
-	contacts, _ := model.GetGroupContactList(msg.ToId, 2)
+	contacts, _ := model.GetGroupUser(msg.ToId)
 	for _, v := range contacts {
 		if v.FromId != msg.FromId {
 			log.Logger.Info(fmt.Sprintf("sendGroupMsg %v ", v.FromId))

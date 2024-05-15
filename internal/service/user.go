@@ -6,6 +6,7 @@ import (
 	"imapi/internal/schema"
 	"imapi/internal/server"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,11 +25,14 @@ func EditUser(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
 		return
 	}
+	nowtime := time.Now().Unix()
+
 	updateData := &model.User{
-		Uid:      data.Uid,
-		Username: data.Username,
-		Info:     data.Info,
-		Avatar:   data.Avatar,
+		Uid:        data.Uid,
+		Username:   data.Username,
+		Info:       data.Info,
+		Avatar:     data.Avatar,
+		UpdateTime: nowtime,
 	}
 	user, err = model.UpdateUser(updateData)
 	if err != nil {
@@ -37,7 +41,7 @@ func EditUser(c *gin.Context) {
 	}
 
 	toMap := make(map[string]interface{})
-	toMap["user"] = getResUser(user)
+	toMap["user"] = schema.GetResFriend(user, &model.ContactUser{})
 	toMapStr, _ := json.Marshal(toMap)
 	go server.UserInfoNoticeMsg(data.Uid, string(toMapStr))
 

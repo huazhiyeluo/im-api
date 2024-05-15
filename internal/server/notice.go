@@ -8,7 +8,7 @@ import (
 
 // 1-1、用户状态
 func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
-	contacts, err := model.GetContactList(uid, 1)
+	contacts, err := model.GetContactUserList(uid)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
@@ -19,7 +19,7 @@ func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
 
 // 1-2、用户信息
 func UserInfoNoticeMsg(uid uint64, content string) {
-	contacts, err := model.GetContactList(uid, 1)
+	contacts, err := model.GetContactUserList(uid)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
@@ -36,7 +36,7 @@ func UserFriendNoticeMsg(fromId uint64, toId uint64, content string, msgMedia ui
 
 // 3、用户群
 func UserGroupNoticeMsg(groupId uint64, content string, msgMedia uint32) {
-	contacts, err := model.GetGroupContactList(groupId, 2)
+	contacts, err := model.GetGroupUser(groupId)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}

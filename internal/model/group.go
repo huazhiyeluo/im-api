@@ -19,7 +19,7 @@ func UpdateGroup(m *Group) (*Group, error) {
 	groupId := m.GroupId
 	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupId).Updates(m).Error
 	if err != nil {
-		log.Print("CreateGroup", err)
+		log.Print("UpdateGroup", err)
 	}
 	return m, err
 }
@@ -34,44 +34,44 @@ func DeleteGroup(groupId uint64) (*Group, error) {
 	return m, err
 }
 
-// 指定群(rows)
-func FindGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
+// 查找用群- name
+func FindGroupByName(name string) (*Group, error) {
 	m := &Group{}
-	var data []*Group
-	err := utils.DB.Table(m.TableName()).Where("group_id in ?", groupIds).Find(&data).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("name = ?", name).Find(m).Error
 	if err != nil {
-		log.Print("GetGroupByGroupIds", err)
+		log.Print("FindGroupByName", err)
 	}
-	return data, err
+	return m, err
 }
 
-// 指定群(rows)
-func GetGroupByOwnerUid(ownerUid uint64) ([]*Group, error) {
-	m := &Group{}
-	var data []*Group
-	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?", ownerUid).Find(&data).Debug().Error
-	if err != nil {
-		log.Print("GetGroupByOwnerUid", err)
-	}
-	return data, err
-}
-
-// 查找群(one)
+// 查找群 - groupId
 func FindGroupByGroupId(groupId uint64) (*Group, error) {
 	m := &Group{}
-	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupId).Find(m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("group_id = ?", groupId).Find(m).Error
 	if err != nil {
 		log.Print("FindGroupByGroupId", err)
 	}
 	return m, err
 }
 
-// 查找用群(one)
-func FindGroupByName(name string) (*Group, error) {
+// 指定群 - groupIds
+func FindGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
 	m := &Group{}
-	err := utils.DB.Table(m.TableName()).Where("name = ?", name).Find(m).Debug().Error
+	var data []*Group
+	err := utils.DB.Table(m.TableName()).Where("group_id in ?", groupIds).Find(&data).Error
 	if err != nil {
-		log.Print("FindGroupByName", err)
+		log.Print("GetGroupByGroupIds", err)
 	}
-	return m, err
+	return data, err
+}
+
+// 指定群 - 拥有者
+func GetGroupByOwnerUid(ownerUid uint64) ([]*Group, error) {
+	m := &Group{}
+	var data []*Group
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?", ownerUid).Find(&data).Error
+	if err != nil {
+		log.Print("GetGroupByOwnerUid", err)
+	}
+	return data, err
 }

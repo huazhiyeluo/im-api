@@ -19,14 +19,15 @@ func UpdateApply(m *Apply) (*Apply, error) {
 	id := m.Id
 	err := utils.DB.Table(m.TableName()).Where("id = ?", id).Updates(m).Error
 	if err != nil {
-		log.Print("CreateApply", err)
+		log.Print("UpdateApply", err)
 	}
 	return m, err
 }
 
+// 查找申请 - id
 func FindApplyById(id uint32) (*Apply, error) {
 	m := &Apply{}
-	err := utils.DB.Table(m.TableName()).Where("id = ?", id).Find(m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("id = ?", id).Find(m).Error
 	if err != nil {
 		log.Print("FindApplyById", err)
 	}
@@ -35,7 +36,7 @@ func FindApplyById(id uint32) (*Apply, error) {
 
 func FindApplyByTwoId(fromId uint64, toId uint64, ttype uint32) (*Apply, error) {
 	m := &Apply{}
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?  and type = ? and status = ?", fromId, toId, ttype, 0).Find(m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?  and type = ? and status = ?", fromId, toId, ttype, 0).Find(m).Error
 	if err != nil {
 		log.Print("FindApplyByTwoId", err)
 	}
@@ -46,7 +47,7 @@ func FindApplyByTwoId(fromId uint64, toId uint64, ttype uint32) (*Apply, error) 
 func GetFriendApplyList(uid uint64) ([]*Apply, error) {
 	m := &Apply{}
 	var data []*Apply
-	err := utils.DB.Table(m.TableName()).Where("((from_id = ? or to_id = ?) and type = 1)", uid, uid).Find(&data).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("((from_id = ? or to_id = ?) and type = 1)", uid, uid).Find(&data).Error
 	if err != nil {
 		log.Print("GetApplyList", err)
 	}
@@ -57,7 +58,7 @@ func GetFriendApplyList(uid uint64) ([]*Apply, error) {
 func GetGroupApplyList(uid uint64, groupIds []uint64) ([]*Apply, error) {
 	m := &Apply{}
 	var data []*Apply
-	err := utils.DB.Table(m.TableName()).Where("((to_id in ? and type = 2) or (from_id = ? and type = 2))", groupIds, uid).Find(&data).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("((to_id in ? and type = 2) or (from_id = ? and type = 2))", groupIds, uid).Find(&data).Error
 	if err != nil {
 		log.Print("GetApplyList", err)
 	}

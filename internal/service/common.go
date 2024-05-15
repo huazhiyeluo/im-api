@@ -1,38 +1,19 @@
 package service
 
 import (
+	"context"
+	"fmt"
 	"imapi/internal/model"
-	"imapi/internal/schema"
-	"imapi/internal/server"
+	"imapi/internal/utils"
+	"time"
 )
 
-// ---------------------------------------------------------------- inner ----------------------------------------------------------------
+func setToken(uid uint64) string {
+	nowtime := time.Now().Unix()
+	token := utils.GenMd5(fmt.Sprintf("%d%d", uid, nowtime))
+	rkey := model.Rktoken(uid)
 
-func getResApplyUser(apply *model.Apply, fromUser *model.User, toUser *model.User) *schema.ResApply {
-	tempApply := &schema.ResApply{Id: apply.Id, FromId: apply.FromId, ToId: apply.ToId, Type: apply.Type, Reason: apply.Reason, Status: apply.Status, OperateTime: apply.OperateTime}
-	tempApply.FromName = fromUser.Username
-	tempApply.FromIcon = fromUser.Avatar
-	tempApply.ToName = toUser.Username
-	tempApply.ToIcon = toUser.Avatar
-	return tempApply
-}
-
-func getResApplyGroup(apply *model.Apply, fromUser *model.User, toGroup *model.Group) *schema.ResApply {
-	tempApply := &schema.ResApply{Id: apply.Id, FromId: apply.FromId, ToId: apply.ToId, Type: apply.Type, Reason: apply.Reason, Status: apply.Status, OperateTime: apply.OperateTime}
-	tempApply.FromName = fromUser.Username
-	tempApply.FromIcon = fromUser.Avatar
-	tempApply.ToName = toGroup.Name
-	tempApply.ToIcon = toGroup.Icon
-	return tempApply
-}
-
-func getResUser(user *model.User) *schema.ResFriend {
-	onlines := server.CheckUserOnlineStatus([]uint64{user.Uid})
-	tempFriend := &schema.ResFriend{Uid: user.Uid, Username: user.Username, Avatar: user.Avatar, IsOnline: onlines[user.Uid], ContactGroupId: 0, Remark: user.Username}
-	return tempFriend
-}
-
-func getResGroup(group *model.Group) *schema.ResGroup {
-	tempGroup := &schema.ResGroup{GroupId: group.GroupId, OwnerUid: group.OwnerUid, Name: group.Name, Icon: group.Icon, Info: group.Info, Num: group.Num, Remark: group.Name}
-	return tempGroup
+	utils.RDB.Set(context.TODO(), rkey, token, time.Minute*time.Duration(0))
+	utils.RDB.ExpireAt(context.TODO(), rkey, time.Now().Add(time.Minute*60*24*2))
+	return token
 }

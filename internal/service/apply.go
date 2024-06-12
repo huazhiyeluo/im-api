@@ -24,43 +24,59 @@ func GetApplyList(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
 		return
 	}
-
 	uid := uint64(utils.ToNumber(data["uid"]))
-	ownGroups, err := model.GetGroupByOwnerUid(uid)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
+	var ttype uint32 = 0
+	if _, ok := data["type"]; ok {
+		ttype = uint32(utils.ToNumber(data["type"]))
 	}
 
-	ownGroupIds := []uint64{}
-	for _, group := range ownGroups {
-		ownGroupIds = append(ownGroupIds, group.GroupId)
-	}
-
-	friendApplys, err := model.GetFriendApplyList(uid)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-
-	groupApplys, err := model.GetGroupApplyList(uid, ownGroupIds)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-
+	var tempApplys []*model.Apply
 	allUids := []uint64{}
 	allGroupIds := []uint64{}
-	var tempApplys []*model.Apply
-	for _, v := range friendApplys {
-		tempApplys = append(tempApplys, v)
-		allUids = append(allUids, v.FromId)
-		allUids = append(allUids, v.ToId)
+	tempAllUsers := make(map[uint64]*model.User)
+	tempAllGroups := make(map[uint64]*model.Group)
+	if utils.IsContainUint32(ttype, []uint32{0, 2}) {
+		ownGroups, err := model.GetGroupByOwnerUid(uid)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			return
+		}
+
+		ownGroupIds := []uint64{}
+		for _, group := range ownGroups {
+			ownGroupIds = append(ownGroupIds, group.GroupId)
+		}
+		groupApplys, err := model.GetGroupApplyList(uid, ownGroupIds)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			return
+		}
+		for _, v := range groupApplys {
+			tempApplys = append(tempApplys, v)
+			allUids = append(allUids, v.FromId)
+			allGroupIds = append(allGroupIds, v.ToId)
+		}
+		allGroups, err := model.FindGroupByGroupIds(allGroupIds)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			return
+		}
+		for _, v := range allGroups {
+			tempAllGroups[v.GroupId] = v
+		}
 	}
-	for _, v := range groupApplys {
-		tempApplys = append(tempApplys, v)
-		allUids = append(allUids, v.FromId)
-		allGroupIds = append(allGroupIds, v.ToId)
+
+	if utils.IsContainUint32(ttype, []uint32{0, 1}) {
+		friendApplys, err := model.GetFriendApplyList(uid)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			return
+		}
+		for _, v := range friendApplys {
+			tempApplys = append(tempApplys, v)
+			allUids = append(allUids, v.FromId)
+			allUids = append(allUids, v.ToId)
+		}
 	}
 
 	allUsers, err := model.FindUserByUids(allUids)
@@ -68,18 +84,9 @@ func GetApplyList(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
-	tempAllUsers := make(map[uint64]*model.User)
+
 	for _, v := range allUsers {
 		tempAllUsers[v.Uid] = v
-	}
-	allGroups, err := model.FindGroupByGroupIds(allGroupIds)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-	tempAllGroups := make(map[uint64]*model.Group)
-	for _, v := range allGroups {
-		tempAllGroups[v.GroupId] = v
 	}
 
 	var applys []*schema.ResApply

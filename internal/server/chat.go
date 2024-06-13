@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"imapi/internal/model"
 	"imapi/internal/utils"
@@ -136,14 +138,29 @@ func (client *Client) ReadData() {
 		msg := &Message{}
 		err := client.Conn.ReadJSON(msg)
 		if err != nil {
+			// 记录错误类型
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Logger.Error(fmt.Sprintf("Liao ReadData Unexpected close error: %v", err))
+			} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				log.Logger.Info(fmt.Sprintf("Liao ReadData Normal close: %v", err))
+			} else {
+				var closeErr *websocket.CloseError
+				if errors.As(err, &closeErr) {
+					log.Logger.Error(fmt.Sprintf("Liao ReadData Close error: Code: %v, Text: %v", closeErr.Code, closeErr.Text))
+				} else {
+					log.Logger.Error(fmt.Sprintf("Liao ReadData Read error: %v", err))
+				}
+			}
+			// 从管理器中注销客户端
 			manager.UnRegister <- client
-			log.Logger.Info(fmt.Sprintf("ReadData1 : %v , %v", err, msg))
+			log.Logger.Info(fmt.Sprintf("Liao Client unregistered: %v , %v", client.Id, client.Uid))
 			return
 		}
-		if msg.MsgType > 0 {
-			log.Logger.Info(fmt.Sprintf("ReadData0 : %v , %v", client.Id, client.Uid))
-			log.Logger.Info(fmt.Sprintf("ReadData内容: %v ", msg))
-		}
+
+		log.Logger.Info(fmt.Sprintf("Liao ReadData0 : %v , %v", client.Id, client.Uid))
+		jsonData, _ := json.Marshal(msg)
+		log.Logger.Info(fmt.Sprintf("Liao ReadData内容: %v ", string(jsonData)))
+
 		CreateMsg(msg)
 	}
 }
@@ -153,9 +170,9 @@ func (client *Client) WriteData() {
 	for {
 		select {
 		case msg := <-client.Message:
-			log.Logger.Info(fmt.Sprintf("WriteData内容 %v ", msg))
+			log.Logger.Info(fmt.Sprintf("Liao WriteData内容 %v ", msg))
 			if err := client.Conn.WriteJSON(msg); err != nil {
-				log.Logger.Info(fmt.Sprintf("Error writing to WebSocket: %v , %v", err, client.Uid))
+				log.Logger.Info(fmt.Sprintf("Liao Error writing to WebSocket: %v , %v", err, client.Uid))
 				return
 			}
 		}

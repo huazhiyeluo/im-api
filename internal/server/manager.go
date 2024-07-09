@@ -120,7 +120,7 @@ func (m *Manager) StoreRedisMessage(msg *Message) {
 		}
 	}
 	if msg.MsgType == 2 {
-		rkey = fmt.Sprintf("msg_%d_%d", 0, msg.FromId)
+		rkey = model.Rkmsg(0, msg.FromId)
 	}
 
 	jsonData, err := json.Marshal(msg)
@@ -180,7 +180,7 @@ func StoreUnreadRedisMessage(uid uint64, msg *Message) {
 // 设置创建通知
 func CreateMsg(msg *Message) {
 	jsonData, _ := json.Marshal(msg)
-	log.Logger.Info(fmt.Sprintf("CreateMsg %v", string(jsonData)))
+	log.Logger.Info(fmt.Sprintf("Liao CreateMsg %v", string(jsonData)))
 	manager.Message <- msg
 }
 

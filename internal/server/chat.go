@@ -170,7 +170,9 @@ func (client *Client) WriteData() {
 	for {
 		select {
 		case msg := <-client.Message:
-			log.Logger.Info(fmt.Sprintf("Liao WriteData内容 %v ", msg))
+			jsonData, _ := json.Marshal(msg)
+			log.Logger.Info(fmt.Sprintf("Liao WriteData内容 %v ", string(jsonData)))
+
 			if err := client.Conn.WriteJSON(msg); err != nil {
 				log.Logger.Info(fmt.Sprintf("Liao Error writing to WebSocket: %v , %v", err, client.Uid))
 				return

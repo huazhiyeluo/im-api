@@ -92,7 +92,7 @@ type Message struct {
 	MsgMedia   uint32          `json:"msgMedia"`   // 图片类型 1文字 2图片 3 音频 4 视频
 	Content    *MessageContent `json:"content"`    // 内容
 	CreateTime int64           `json:"createTime"` // 创建时间
-	Status     uint32          `json:"status"`     // 状态
+	Status     uint32          `json:"status"`     // 状态 0 正常消息 1未读消息重发
 }
 
 func UpgradeWebSocket(c *gin.Context) (*websocket.Conn, error) {

@@ -76,6 +76,11 @@ func (m *Manager) UnRegisterClient(client *Client) {
 
 // 消息存贮
 func (m *Manager) StoreData(msg *Message) {
+	//未读消息就不在存储了
+	if msg.Status == 1 {
+		return
+	}
+
 	jsonData, _ := json.Marshal(msg)
 	log.Logger.Info(fmt.Sprintf("StoreData %v", string(jsonData)))
 	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3, 4}) {
@@ -258,7 +263,7 @@ func PushUnreadMessage(uid uint64) {
 				MsgMedia:   msgMaps[v.MsgId].MsgMedia,
 				Content:    content,
 				CreateTime: msgMaps[v.MsgId].CreateTime,
-				Status:     msgMaps[v.MsgId].Status,
+				Status:     1,
 			}
 			CreateMsg(msg)
 		}
@@ -272,6 +277,7 @@ func PushUnreadMessage(uid uint64) {
 			}
 			msg := &Message{}
 			json.Unmarshal([]byte(temp), msg)
+			msg.Status = 1
 			CreateMsg(msg)
 		}
 	}

@@ -245,7 +245,7 @@ func SendAckMsg(msg *Message) {
 		client := v.(*Client)
 		client.Message <- msg
 	} else {
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{0, 2}) {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{4, 5}) {
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_QUIT, Content: &MessageContent{Data: ""}})
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NOT_ONLINE, Content: &MessageContent{Data: "对方不在线"}})
 			go CreateMsg(&Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NO_CONNECT, Content: &MessageContent{Data: "呼叫未接通"}})
@@ -282,21 +282,21 @@ func getSessionKey(uid uint64) string {
 func checkSessionKey(c *gin.Context, uid uint64) {
 	sessionKey := ""
 	session, _ := c.Request.Cookie("sessionKey")
+	log.Logger.Info(fmt.Sprintf("QIM session: %v", session))
 	if session != nil {
 		sessionKey = session.Value
 	}
-
 	oldSessionKey := getSessionKey(uid)
 	if oldSessionKey != "" {
+		log.Logger.Info(fmt.Sprintf("QIM 1 : %v", uid))
 		if oldSessionKey != sessionKey {
+			log.Logger.Info(fmt.Sprintf("QIM 2 : %v", uid))
 			if oldclient, ok := manager.Clients.Load(uid); ok {
-				log.Logger.Info(fmt.Sprintf("下线: %v", uid))
+				log.Logger.Info(fmt.Sprintf("QIM 下线: %v", uid))
 				msg := &Message{FromId: uid, ToId: uid, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_OFFLINE_PACK, Content: &MessageContent{Data: "下线"}}
 				oldclient.(*Client).Message <- msg
 			}
 		}
-	} else {
-		setSessionKey(uid, sessionKey)
 	}
-
+	setSessionKey(uid, sessionKey)
 }

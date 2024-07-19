@@ -1,6 +1,6 @@
 package schema
 
-import "imapi/internal/model"
+import "qqapi/internal/model"
 
 type ResApply struct {
 	Id          uint32 `json:"id"`

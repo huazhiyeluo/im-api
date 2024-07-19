@@ -1,10 +1,10 @@
 package main
 
 import (
-	"imapi/internal/server"
-	"imapi/internal/utils"
-	"imapi/router"
-	"imapi/third_party/log"
+	"qqapi/internal/server"
+	"qqapi/internal/utils"
+	"qqapi/router"
+	"qqapi/third_party/log"
 	"time"
 
 	"github.com/spf13/viper"

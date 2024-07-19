@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"imapi/internal/model"
+	"qqapi/internal/model"
 )
 
 // 入参

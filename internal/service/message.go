@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"imapi/internal/model"
-	"imapi/internal/schema"
-	"imapi/internal/utils"
+	"qqapi/internal/model"
+	"qqapi/internal/schema"
+	"qqapi/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

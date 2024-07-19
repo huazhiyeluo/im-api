@@ -1,8 +1,10 @@
 package model
 
 import (
-	"imapi/internal/utils"
 	"log"
+	"qqapi/internal/utils"
+
+	"gorm.io/gorm"
 )
 
 // 创建用户
@@ -63,4 +65,41 @@ func FindUserByUids(uids []uint64) ([]*User, error) {
 		log.Print("GetUserByUids", err)
 	}
 	return data, err
+}
+
+// ACT 用户
+func ActUser(uid uint64, fields []*Fields) (*User, error) {
+	updates := make(map[string]interface{})
+	for _, v := range fields {
+		if v.Otype == 0 {
+			updates[v.Field] = gorm.Expr(v.Field+" + ?", v.Value)
+		}
+		if v.Otype == 1 {
+			updates[v.Field] = gorm.Expr(v.Field+" - ?", v.Value)
+		}
+		if v.Otype == 2 {
+			updates[v.Field] = v.Value
+		}
+	}
+	m, err := FindUserByUid(uid)
+	if err != nil {
+		log.Print("FindUserByUid", err)
+		return m, err
+	}
+	if m.Uid == 0 {
+		updates["uid"] = uid
+		err = utils.DB.Table(m.TableName()).Create(updates).Error
+		if err != nil {
+			log.Print("ActUser", err)
+			return m, err
+		}
+	} else {
+		err = utils.DB.Table(m.TableName()).Where("uid = ?", uid).Updates(updates).Error
+		if err != nil {
+			log.Print("ActUser", err)
+			return m, err
+		}
+	}
+	m, err = FindUserByUid(uid)
+	return m, err
 }

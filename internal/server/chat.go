@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"imapi/internal/model"
-	"imapi/internal/utils"
-	"imapi/third_party/log"
 	"net/http"
+	"qqapi/internal/model"
+	"qqapi/internal/utils"
+	"qqapi/third_party/log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -243,7 +243,16 @@ func SendAckMsg(msg *Message) {
 	// 将消息加入节点的消息队列
 	if v, ok := manager.Clients.Load(msg.ToId); ok {
 		client := v.(*Client)
-		client.Message <- msg
+
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{4}) {
+			tempmsg := &Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_CONTACT, Content: &MessageContent{Data: ""}}
+			client.Message <- tempmsg
+			time.Sleep(1 * time.Second)
+			client.Message <- msg
+		} else {
+			client.Message <- msg
+		}
+
 	} else {
 		if utils.IsContainUint32(msg.MsgMedia, []uint32{4, 5}) {
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_QUIT, Content: &MessageContent{Data: ""}})

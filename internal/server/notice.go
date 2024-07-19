@@ -2,13 +2,13 @@ package server
 
 import (
 	"fmt"
-	"imapi/internal/model"
-	"imapi/third_party/log"
+	"qqapi/internal/model"
+	"qqapi/third_party/log"
 )
 
 // 1-1、用户状态
 func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
-	contacts, err := model.GetContactUserList(uid)
+	contacts, err := model.GetContactFriendList(uid)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
@@ -19,7 +19,7 @@ func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
 
 // 1-2、用户信息
 func UserInfoNoticeMsg(uid uint64, content string) {
-	contacts, err := model.GetContactUserList(uid)
+	contacts, err := model.GetContactFriendList(uid)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}

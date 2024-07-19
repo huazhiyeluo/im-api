@@ -1,8 +1,8 @@
 package model
 
 import (
-	"imapi/internal/utils"
 	"log"
+	"qqapi/internal/utils"
 )
 
 // 创建申请表

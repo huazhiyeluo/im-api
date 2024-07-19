@@ -63,7 +63,7 @@ func (m *GroupTips) TableName() string {
 }
 
 // 4、好友联系人表
-type ContactUser struct {
+type ContactFriend struct {
 	FromId        uint64 `gorm:"column:from_id;default:0;NOT NULL"`         // ID [主]
 	ToId          uint64 `gorm:"column:to_id;default:0;NOT NULL"`           // ID  [从]
 	FriendGroupId uint32 `gorm:"column:friend_group_id;default:0;NOT NULL"` // 用户组ID 0 默认分组
@@ -73,10 +73,11 @@ type ContactUser struct {
 	IsHidden      uint32 `gorm:"column:is_hidden;default:0"`                // 是否隐藏 0否1是
 	IsQuiet       uint32 `gorm:"column:is_quiet;default:0"`                 // 是否免打扰 0否1是
 	JoinTime      int64  `gorm:"column:join_time;default:0;NOT NULL"`       // 加好友时间
+	UpdateTime    int64  `gorm:"column:update_time;NOT NULL"`               // 更新时间
 }
 
-func (m *ContactUser) TableName() string {
-	return "qqim.contact_user"
+func (m *ContactFriend) TableName() string {
+	return "qqim.contact_friend"
 }
 
 // 5、组联系人表
@@ -91,6 +92,7 @@ type ContactGroup struct {
 	IsHidden   uint32 `gorm:"column:is_hidden;default:0"`            // 是否隐藏 0否1是
 	IsQuiet    uint32 `gorm:"column:is_quiet;default:0"`             // 是否免打扰 0否1是
 	JoinTime   int64  `gorm:"column:join_time;default:0;NOT NULL"`   // 入群时间
+	UpdateTime int64  `gorm:"column:update_time;NOT NULL"`           // 更新时间
 }
 
 func (m *ContactGroup) TableName() string {
@@ -137,4 +139,10 @@ type Apply struct {
 
 func (m *Apply) TableName() string {
 	return "qqim.apply"
+}
+
+type Fields struct {
+	Field string
+	Otype uint32
+	Value interface{}
 }

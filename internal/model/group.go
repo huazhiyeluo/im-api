@@ -1,8 +1,10 @@
 package model
 
 import (
-	"imapi/internal/utils"
 	"log"
+	"qqapi/internal/utils"
+
+	"gorm.io/gorm"
 )
 
 // 创建群
@@ -74,4 +76,41 @@ func GetGroupByOwnerUid(ownerUid uint64) ([]*Group, error) {
 		log.Print("GetGroupByOwnerUid", err)
 	}
 	return data, err
+}
+
+// ACT 用户组
+func ActGroup(groupId uint64, fields []*Fields) (*Group, error) {
+	updates := make(map[string]interface{})
+	for _, v := range fields {
+		if v.Otype == 0 {
+			updates[v.Field] = gorm.Expr(v.Field+" + ?", v.Value)
+		}
+		if v.Otype == 1 {
+			updates[v.Field] = gorm.Expr(v.Field+" - ?", v.Value)
+		}
+		if v.Otype == 2 {
+			updates[v.Field] = v.Value
+		}
+	}
+	m, err := FindGroupByGroupId(groupId)
+	if err != nil {
+		log.Print("FindGroupByGroupId", err)
+		return m, err
+	}
+	if m.GroupId == 0 {
+		updates["group_id"] = groupId
+		err = utils.DB.Table(m.TableName()).Create(updates).Error
+		if err != nil {
+			log.Print("ActGroup", err)
+			return m, err
+		}
+	} else {
+		err = utils.DB.Table(m.TableName()).Where("group_id = ?", groupId).Updates(updates).Error
+		if err != nil {
+			log.Print("ActGroup", err)
+			return m, err
+		}
+	}
+	m, err = FindGroupByGroupId(groupId)
+	return m, err
 }

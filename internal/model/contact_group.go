@@ -1,8 +1,10 @@
 package model
 
 import (
-	"imapi/internal/utils"
 	"log"
+	"qqapi/internal/utils"
+
+	"gorm.io/gorm"
 )
 
 // 获取群列表
@@ -74,5 +76,43 @@ func DeleteContactGroupAll(toId uint64) (*ContactGroup, error) {
 	if err != nil {
 		log.Print("DeleteContactGroupAll", err)
 	}
+	return m, err
+}
+
+// ACT 联系人群组
+func ActContactGroup(fromId uint64, toId uint64, fields []*Fields) (*ContactGroup, error) {
+	updates := make(map[string]interface{})
+	for _, v := range fields {
+		if v.Otype == 0 {
+			updates[v.Field] = gorm.Expr(v.Field+" + ?", v.Value)
+		}
+		if v.Otype == 1 {
+			updates[v.Field] = gorm.Expr(v.Field+" - ?", v.Value)
+		}
+		if v.Otype == 2 {
+			updates[v.Field] = v.Value
+		}
+	}
+	m, err := GetContactGroupOne(fromId, toId)
+	if err != nil {
+		log.Print("GetContactGroupOne", err)
+		return m, err
+	}
+	if m.FromId == 0 {
+		updates["from_id"] = fromId
+		updates["to_id"] = toId
+		err = utils.DB.Table(m.TableName()).Create(updates).Error
+		if err != nil {
+			log.Print("ActContactGroup", err)
+			return m, err
+		}
+	} else {
+		err = utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Updates(updates).Error
+		if err != nil {
+			log.Print("ActContactGroup", err)
+			return m, err
+		}
+	}
+	m, err = GetContactGroupOne(fromId, toId)
 	return m, err
 }

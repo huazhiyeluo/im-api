@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"imapi/internal/model"
-	"imapi/internal/utils"
-	"imapi/third_party/log"
+	"qqapi/internal/model"
+	"qqapi/internal/utils"
+	"qqapi/third_party/log"
 	"sync"
 	"time"
 

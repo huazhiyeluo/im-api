@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"imapi/internal/utils"
+	"qqapi/internal/utils"
 	"net/http"
 	"path/filepath"
 	"time"

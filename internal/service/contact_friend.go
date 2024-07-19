@@ -3,19 +3,47 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"imapi/internal/model"
-	"imapi/internal/schema"
-	"imapi/internal/server"
-	"imapi/internal/utils"
-	"imapi/third_party/log"
 	"net/http"
+	"qqapi/internal/model"
+	"qqapi/internal/schema"
+	"qqapi/internal/server"
+	"qqapi/internal/utils"
+	"qqapi/third_party/log"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// 1-1、好友列表
-func GetFriendList(c *gin.Context) {
+// 1-1、好友分组
+func GetContactFriendGroup(c *gin.Context) {
+
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["ownUid"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
+	ownUid := uint32(utils.ToNumber(data["ownUid"]))
+	contactFriends, err := model.GetFriendGroup(ownUid)
+
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		return
+	}
+	var datacontactFriends []*schema.ResContactFriendGroup
+	for _, v := range contactFriends {
+		datacontactFriends = append(datacontactFriends, &schema.ResContactFriendGroup{FriendGroupId: v.FriendGroupId, OwnerUid: v.OwnerUid, Name: v.Name})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": datacontactFriends,
+	})
+}
+
+// 1-2、好友列表
+func GetContactFriendList(c *gin.Context) {
 
 	data := make(map[string]interface{})
 	c.Bind(&data)
@@ -26,7 +54,7 @@ func GetFriendList(c *gin.Context) {
 	}
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 
-	contacts, err := model.GetContactUserList(fromId)
+	contacts, err := model.GetContactFriendList(fromId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -45,9 +73,9 @@ func GetFriendList(c *gin.Context) {
 	for _, v := range toUsers {
 		tempToUsers[v.Uid] = v
 	}
-	var dataUsers []*schema.ResFriend
+	var dataUsers []*schema.ResContactFriend
 	for _, v := range contacts {
-		temp := schema.GetResFriend(tempToUsers[v.ToId], v)
+		temp := schema.GetResContactFriend(tempToUsers[v.ToId], v)
 		dataUsers = append(dataUsers, temp)
 	}
 	c.JSON(http.StatusOK, gin.H{
@@ -56,8 +84,8 @@ func GetFriendList(c *gin.Context) {
 	})
 }
 
-// 1-2、好友-one
-func GetFriendOne(c *gin.Context) {
+// 1-3、好友-one
+func GetContactFriendOne(c *gin.Context) {
 
 	data := make(map[string]interface{})
 	c.Bind(&data)
@@ -74,7 +102,7 @@ func GetFriendOne(c *gin.Context) {
 	}
 	toId := uint64(utils.ToNumber(data["toId"]))
 
-	contactUser, err := model.GetContactUserOne(fromId, toId)
+	ContactFriend, err := model.GetContactFriendOne(fromId, toId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
@@ -85,7 +113,7 @@ func GetFriendOne(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
 		return
 	}
-	dataUser := schema.GetResFriend(toUser, contactUser)
+	dataUser := schema.GetResContactFriend(toUser, ContactFriend)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
@@ -93,36 +121,8 @@ func GetFriendOne(c *gin.Context) {
 	})
 }
 
-// 1-3、好友分组
-func GetFriendGroup(c *gin.Context) {
-
-	data := make(map[string]interface{})
-	c.Bind(&data)
-
-	if _, ok := data["ownUid"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
-		return
-	}
-	ownUid := uint32(utils.ToNumber(data["ownUid"]))
-	contactGroups, err := model.GetFriendGroup(ownUid)
-
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-	var dataContactGroups []*schema.ResContactGroup
-	for _, v := range contactGroups {
-		dataContactGroups = append(dataContactGroups, &schema.ResContactGroup{FriendGroupId: v.FriendGroupId, OwnerUid: v.OwnerUid, Name: v.Name})
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-		"data": dataContactGroups,
-	})
-}
-
-// 1-4、添加好友
-func AddFriend(c *gin.Context) {
+// 2-1、添加好友
+func AddContactFriend(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 
@@ -159,7 +159,7 @@ func AddFriend(c *gin.Context) {
 		return
 	}
 
-	cantactUser, err := model.GetContactUserOne(fromId, toId)
+	cantactUser, err := model.GetContactFriendOne(fromId, toId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
@@ -222,8 +222,8 @@ func AddFriend(c *gin.Context) {
 
 }
 
-// 1-5、删除好友
-func DelFriend(c *gin.Context) {
+// 2-2、删除好友
+func DelContactFriend(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 	fromId := uint64(utils.ToNumber(data["fromId"]))
@@ -233,7 +233,6 @@ func DelFriend(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "参数错误"})
 		return
 	}
-
 	fromUser, err := model.FindUserByUid(fromId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
@@ -254,13 +253,13 @@ func DelFriend(c *gin.Context) {
 		return
 	}
 
-	contact, err := model.DeleteContactUser(fromId, toId)
+	contact, err := model.DeleteContactFriend(fromId, toId)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v", contact))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
-	contact, err = model.DeleteContactUser(toId, fromId)
+	contact, err = model.DeleteContactFriend(toId, fromId)
 	if err != nil {
 		log.Logger.Info(fmt.Sprintf("%v", contact))
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
@@ -268,16 +267,61 @@ func DelFriend(c *gin.Context) {
 	}
 
 	toMap := make(map[string]interface{})
-	toMap["user"] = schema.GetResFriend(fromUser, &model.ContactUser{})
+	toMap["user"] = schema.GetResContactFriend(fromUser, &model.ContactFriend{})
 	toMapStr, _ := json.Marshal(toMap)
 	go server.UserFriendNoticeMsg(fromId, toId, string(toMapStr), server.MSG_MEDIA_FRIEND_DELETE)
 
 	fromMap := make(map[string]interface{})
-	fromMap["user"] = schema.GetResFriend(toUser, &model.ContactUser{})
+	fromMap["user"] = schema.GetResContactFriend(toUser, &model.ContactFriend{})
 	fromMapStr, _ := json.Marshal(fromMap)
 	go server.UserFriendNoticeMsg(toId, fromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_DELETE)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
+	})
+}
+
+// 3-1、修改好友联系人信息
+func ActContactFriend(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["fromId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+
+	if _, ok := data["toId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
+	toId := uint64(utils.ToNumber(data["toId"]))
+
+	contactFriend, err := model.GetContactFriendOne(fromId, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if contactFriend.FromId == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "没有加好友"})
+		return
+	}
+	nowtime := time.Now().Unix()
+
+	var updatesContactFriend []*model.Fields
+	updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "update_time", Otype: 2, Value: nowtime})
+	for key, val := range data {
+		newkey := utils.CamelToSnakeCase(key)
+		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: newkey, Otype: 2, Value: val})
+	}
+	contactFriend, err = model.ActContactFriend(fromId, toId, updatesContactFriend)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": contactFriend,
 	})
 }

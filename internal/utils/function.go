@@ -1,12 +1,14 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -79,4 +81,23 @@ func IsContainUint32(str uint32, arr []uint32) bool {
 		}
 	}
 	return false
+}
+
+// CamelToSnakeCase 将驼峰命名转换为下划线命名
+func CamelToSnakeCase(input string) string {
+	var buf bytes.Buffer
+	buf.Grow(len(input) * 2) // 预分配足够的空间，避免动态分配
+
+	for i, r := range input {
+		if unicode.IsUpper(r) {
+			if i > 0 {
+				buf.WriteByte('_')
+			}
+			buf.WriteRune(unicode.ToLower(r))
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+
+	return buf.String()
 }

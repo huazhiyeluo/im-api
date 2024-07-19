@@ -1,17 +1,17 @@
 package schema
 
 import (
-	"imapi/internal/model"
-	"imapi/internal/server"
+	"qqapi/internal/model"
+	"qqapi/internal/server"
 )
 
-type ResContactGroup struct {
+type ResContactFriendGroup struct {
 	FriendGroupId uint32 `json:"friendGroupId"` // UID
 	OwnerUid      uint64 `json:"ownerUid"`      // 用户名
 	Name          string `json:"name"`          // 联系人组名
 }
 
-type ResFriend struct {
+type ResContactFriend struct {
 	Uid           uint64 `json:"uid"`           // UID
 	Username      string `json:"username"`      // 昵称
 	Email         string `json:"email"`         // 邮箱
@@ -35,9 +35,9 @@ type ResFriend struct {
 /********************************对接口********************************/
 
 // 好友和好友备注组合
-func GetResFriend(user *model.User, contact *model.ContactUser) *ResFriend {
+func GetResContactFriend(user *model.User, contact *model.ContactFriend) *ResContactFriend {
 	onlines := server.CheckUserOnlineStatus([]uint64{user.Uid})
-	tempFriend := &ResFriend{
+	tempFriend := &ResContactFriend{
 		Uid:           user.Uid,
 		Username:      user.Username,
 		Email:         user.Email,

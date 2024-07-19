@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"imapi/internal/model"
-	"imapi/internal/utils"
+	"qqapi/internal/model"
+	"qqapi/internal/utils"
 	"time"
 )
 

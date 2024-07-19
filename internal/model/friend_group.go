@@ -1,7 +1,7 @@
 package model
 
 import (
-	"imapi/internal/utils"
+	"qqapi/internal/utils"
 	"log"
 )
 

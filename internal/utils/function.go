@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	uuid "github.com/satori/go.uuid"
@@ -100,4 +101,24 @@ func CamelToSnakeCase(input string) string {
 	}
 
 	return buf.String()
+}
+
+func GetDate(params ...interface{}) string {
+	var timestamp int64
+	var format string
+	if len(params) > 0 {
+		timestamp = params[0].(int64)
+		if timestamp == 0 {
+			timestamp = time.Now().Unix()
+		}
+	} else {
+		timestamp = time.Now().Unix()
+	}
+	if len(params) > 1 {
+		format = params[1].(string)
+	} else {
+		format = "20060102"
+	}
+	timeStr := time.Unix(timestamp, 0).Format(format)
+	return timeStr
 }

@@ -8,7 +8,8 @@ port:
   server: ":8081"
   udp: 5000
 cdn:
-  url: "http://localhost:8081/static"
+  path: "/data/mywww/img.siyuwen.com/godata"
+  url: "http://img-siyuwen.com/godata"
 
 
 

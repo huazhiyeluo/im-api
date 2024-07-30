@@ -2,9 +2,9 @@ package service
 
 import (
 	"fmt"
-	"qqapi/internal/utils"
 	"net/http"
 	"path/filepath"
+	"qqapi/internal/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,8 +20,10 @@ func Upload(c *gin.Context) {
 	nowtime := time.Now().Unix()
 	tempPath := utils.GenMd5(fmt.Sprintf("%s-%d", file.Filename, nowtime))
 
-	dst := fmt.Sprintf("./static/images/%s%s", tempPath, ext)
-	url := fmt.Sprintf("%s/images/%s%s", viper.GetString("cdn.url"), tempPath, ext)
+	tdate := utils.GetDate(nowtime)
+
+	dst := fmt.Sprintf("%s/%s/%s%s", viper.GetString("cdn.path"), tdate, tempPath, ext)
+	url := fmt.Sprintf("%s/%s/%s%s", viper.GetString("cdn.url"), tdate, tempPath, ext)
 
 	c.SaveUploadedFile(file, dst)
 

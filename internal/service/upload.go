@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"qqapi/internal/utils"
 	"time"
@@ -24,6 +25,13 @@ func Upload(c *gin.Context) {
 
 	dst := fmt.Sprintf("%s/%s/%s%s", viper.GetString("cdn.path"), tdate, tempPath, ext)
 	url := fmt.Sprintf("%s/%s/%s%s", viper.GetString("cdn.url"), tdate, tempPath, ext)
+
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code": 1,
+		})
+		return
+	}
 
 	c.SaveUploadedFile(file, dst)
 

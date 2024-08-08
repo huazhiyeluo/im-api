@@ -327,8 +327,17 @@ func ActContactGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
+
+	group, err := model.FindGroupByGroupId(toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		return
+	}
+
+	dataGroup := schema.GetResContactGroup(group, contactGroup)
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": contactGroup,
+		"data": dataGroup,
 	})
 }

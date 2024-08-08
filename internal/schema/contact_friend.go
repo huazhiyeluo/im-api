@@ -25,6 +25,7 @@ type ResContactFriend struct {
 	FriendGroupId uint32 `json:"friendGroupId"` // 用户组ID 0 默认分组
 	Level         uint32 `json:"level"`         // 用户亲密度
 	Remark        string `json:"remark"`        // 备注
+	Desc          string `json:"desc"`          // 备注
 	IsTop         uint32 `json:"isTop"`         // 是否置顶 0否1是
 	IsHidden      uint32 `json:"isHidden"`      // 是否隐藏 0否1是
 	IsQuiet       uint32 `json:"isQuiet"`       // 是否免打扰 0否1是
@@ -51,6 +52,7 @@ func GetResContactFriend(user *model.User, contact *model.ContactFriend) *ResCon
 		FriendGroupId: contact.FriendGroupId,
 		Level:         contact.Level,
 		Remark:        contact.Remark,
+		Desc:          contact.Desc,
 		IsTop:         contact.IsTop,
 		IsHidden:      contact.IsHidden,
 		IsQuiet:       contact.IsQuiet,

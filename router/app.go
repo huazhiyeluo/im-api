@@ -28,6 +28,9 @@ func Router() *gin.Engine {
 
 	// contact_friend
 	r.POST("/user/getContactFriendGroup", service.GetContactFriendGroup)
+	r.POST("/user/addContactFriendGroup", service.AddContactFriendGroup)
+	r.POST("/user/delContactFriendGroup", service.DelContactFriendGroup)
+
 	r.POST("/user/getContactFriendList", service.GetContactFriendList)
 	r.POST("/user/getContactFriendOne", service.GetContactFriendOne)
 	r.POST("/user/addContactFriend", service.AddContactFriend)

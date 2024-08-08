@@ -69,6 +69,7 @@ type ContactFriend struct {
 	FriendGroupId uint32 `gorm:"column:friend_group_id;default:0;NOT NULL"` // 用户组ID 0 默认分组
 	Level         uint32 `gorm:"column:level;default:0;NOT NULL"`           // 用户亲密度
 	Remark        string `gorm:"column:remark;NOT NULL"`                    // 备注
+	Desc          string `gorm:"column:desc;NOT NULL"`                      // 描述
 	IsTop         uint32 `gorm:"column:is_top;default:0;NOT NULL"`          // 是否置顶 0否1是
 	IsHidden      uint32 `gorm:"column:is_hidden;default:0"`                // 是否隐藏 0否1是
 	IsQuiet       uint32 `gorm:"column:is_quiet;default:0"`                 // 是否免打扰 0否1是

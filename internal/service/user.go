@@ -41,13 +41,12 @@ func EditUser(c *gin.Context) {
 	}
 
 	toMap := make(map[string]interface{})
-	toMap["user"] = schema.GetResContactFriend(user, &model.ContactFriend{})
+	toMap["user"] = schema.GetResUser(user)
 	toMapStr, _ := json.Marshal(toMap)
 	go server.UserInfoNoticeMsg(data.Uid, string(toMapStr))
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": user,
 	})
 }
 
@@ -85,11 +84,49 @@ func ActUser(c *gin.Context) {
 		return
 	}
 	toMap := make(map[string]interface{})
-	toMap["user"] = schema.GetResContactFriend(user, &model.ContactFriend{})
+	toMap["user"] = schema.GetResUser(user)
 	toMapStr, _ := json.Marshal(toMap)
 	go server.UserInfoNoticeMsg(uid, string(toMapStr))
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": user,
+	})
+}
+
+// 3、搜索用户
+func SearchUser(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["keyword"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "条件不存在"})
+		return
+	}
+	keyword := utils.ToString(data["keyword"])
+	pageSize := uint32(utils.ToNumber(data["pageSize"]))
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	pageNum := uint32(utils.ToNumber(data["pageNum"]))
+	if pageNum == 0 {
+		pageNum = 1
+	}
+	users, count, err := model.FindUserByKeyword(pageSize, pageNum, keyword)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	var dataUsers []*schema.ResUser
+	for _, v := range users {
+		temp := schema.GetResUser(v)
+		dataUsers = append(dataUsers, temp)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": map[string]interface{}{
+			"users": dataUsers,
+			"count": count,
+		},
 	})
 }

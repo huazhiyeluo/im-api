@@ -12,16 +12,8 @@ type ResContactFriendGroup struct {
 }
 
 type ResContactFriend struct {
-	Uid           uint64 `json:"uid"`           // UID
-	Username      string `json:"username"`      // 昵称
-	Email         string `json:"email"`         // 邮箱
-	Phone         string `json:"phone"`         // 手机号
-	Avatar        string `json:"avatar"`        // 头像
-	Sex           uint32 `json:"sex"`           // 性别： 0 未知 1男 2女
-	Birthday      int64  `json:"birthday"`      // 生日
-	Info          string `json:"info"`          // 简介
-	Exp           uint32 `json:"exp"`           // 用户经验
-	CreateTime    int64  `json:"createTime"`    // 创建时间
+	FromId        uint64 `json:"fromId"`        // UID
+	ToId          uint64 `json:"toId"`          // UID
 	FriendGroupId uint32 `json:"friendGroupId"` // 用户组ID 0 默认分组
 	Level         uint32 `json:"level"`         // 用户亲密度
 	Remark        string `json:"remark"`        // 备注
@@ -35,20 +27,12 @@ type ResContactFriend struct {
 
 /********************************对接口********************************/
 
-// 好友和好友备注组合
-func GetResContactFriend(user *model.User, contact *model.ContactFriend) *ResContactFriend {
-	onlines := server.CheckUserOnlineStatus([]uint64{user.Uid})
+// 好友联系人
+func GetResContactFriend(contact *model.ContactFriend) *ResContactFriend {
+	onlines := server.CheckUserOnlineStatus([]uint64{contact.ToId})
 	tempFriend := &ResContactFriend{
-		Uid:           user.Uid,
-		Username:      user.Username,
-		Email:         user.Email,
-		Phone:         user.Phone,
-		Avatar:        user.Avatar,
-		Sex:           user.Sex,
-		Birthday:      user.Birthday,
-		Info:          user.Info,
-		Exp:           user.Exp,
-		CreateTime:    user.CreateTime,
+		FromId:        contact.FromId,
+		ToId:          contact.ToId,
 		FriendGroupId: contact.FriendGroupId,
 		Level:         contact.Level,
 		Remark:        contact.Remark,
@@ -57,7 +41,7 @@ func GetResContactFriend(user *model.User, contact *model.ContactFriend) *ResCon
 		IsHidden:      contact.IsHidden,
 		IsQuiet:       contact.IsQuiet,
 		JoinTime:      contact.JoinTime,
-		IsOnline:      onlines[user.Uid],
+		IsOnline:      onlines[contact.ToId],
 	}
 	return tempFriend
 }

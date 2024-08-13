@@ -67,6 +67,32 @@ func FindGroupByGroupIds(groupIds []uint64) ([]*Group, error) {
 	return data, err
 }
 
+// 查找用户-关键字
+func FindGroupByKeyword(pageSize uint32, pageNum uint32, keyword string) ([]*Group, int64, error) {
+	m := &Group{}
+	var data []*Group
+	var count int64
+	db := utils.DB.Table(m.TableName())
+
+	if keyword != "" {
+		db.Where("group_id like ? or name like ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	err1 := db.Count(&count).Error
+	if err1 != nil {
+		return data, count, err1
+	}
+
+	offset := int((pageNum - 1) * pageSize)
+	size := int(pageSize)
+
+	err := db.Limit(size).Offset(offset).Order("group_id asc").Find(&data).Debug().Error
+	if err != nil {
+		log.Print("FindUserByKeyword", err)
+		return data, count, err
+	}
+	return data, count, err
+}
+
 // 指定群 - 拥有者
 func GetGroupByOwnerUid(ownerUid uint64) ([]*Group, error) {
 	m := &Group{}

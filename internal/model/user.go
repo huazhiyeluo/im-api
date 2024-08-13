@@ -52,6 +52,7 @@ func FindUserByUid(uid uint64) (*User, error) {
 	err := utils.DB.Table(m.TableName()).Where("uid = ?", uid).Find(m).Error
 	if err != nil {
 		log.Print("FindUserByUid", err)
+		return m, err
 	}
 	return m, err
 }
@@ -63,8 +64,35 @@ func FindUserByUids(uids []uint64) ([]*User, error) {
 	err := utils.DB.Table(m.TableName()).Where("uid in ?", uids).Find(&data).Error
 	if err != nil {
 		log.Print("GetUserByUids", err)
+		return data, err
 	}
 	return data, err
+}
+
+// 查找用户-关键字
+func FindUserByKeyword(pageSize uint32, pageNum uint32, keyword string) ([]*User, int64, error) {
+	m := &User{}
+	var data []*User
+	var count int64
+	db := utils.DB.Table(m.TableName())
+
+	if keyword != "" {
+		db.Where("uid like ? or username like ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	err1 := db.Count(&count).Error
+	if err1 != nil {
+		return data, count, err1
+	}
+
+	offset := int((pageNum - 1) * pageSize)
+	size := int(pageSize)
+
+	err := db.Limit(size).Offset(offset).Order("uid asc").Find(&data).Debug().Error
+	if err != nil {
+		log.Print("FindUserByKeyword", err)
+		return data, count, err
+	}
+	return data, count, err
 }
 
 // ACT 用户

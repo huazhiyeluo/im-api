@@ -129,13 +129,15 @@ func (m *MessageUnread) TableName() string {
 
 // 8.申请联系人表
 type Apply struct {
-	Id          uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
-	FromId      uint64 `gorm:"column:from_id;default:0;NOT NULL"`    // ID [主]
-	ToId        uint64 `gorm:"column:to_id;default:0;NOT NULL"`      // ID  [从]
-	Type        uint32 `gorm:"column:type;default:0;NOT NULL"`       // 联系人类型 1用户 2群
-	Reason      string `gorm:"column:reason;NOT NULL"`               // 原因
-	Status      uint32 `gorm:"column:status;default:0;NOT NULL"`     // 状态 0默认 1同意 2拒绝
-	OperateTime int64  `gorm:"column:operate_time;default:0"`        // 创建时间
+	Id            uint32 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	FromId        uint64 `gorm:"column:from_id;default:0;NOT NULL"`    // ID [主]
+	ToId          uint64 `gorm:"column:to_id;default:0;NOT NULL"`      // ID  [从]
+	Type          uint32 `gorm:"column:type;default:0;NOT NULL"`       // 联系人类型 1用户 2群
+	Reason        string `gorm:"column:reason;NOT NULL"`               // 原因
+	Remark        string `gorm:"column:remark;NOT NULL"`               // 用户备注
+	FriendGroupId uint32 `gorm:"column:friend_group_id;NOT NULL"`      // 用户组ID 0 默认分组
+	Status        uint32 `gorm:"column:status;default:0;NOT NULL"`     // 状态 0默认 1同意 2拒绝
+	OperateTime   int64  `gorm:"column:operate_time;default:0"`        // 创建时间
 }
 
 func (m *Apply) TableName() string {

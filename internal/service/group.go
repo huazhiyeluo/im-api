@@ -68,14 +68,14 @@ func EditGroup(c *gin.Context) {
 
 	//1、告诉请求的人消息
 	fromMap := make(map[string]interface{})
-	fromMap["user"] = schema.GetResContactGroupUser(fromUser, &model.ContactGroup{})
-	fromMap["group"] = schema.GetResContactGroup(group, contactGroup)
+	fromMap["user"] = schema.GetResUser(fromUser)
+	fromMap["group"] = schema.GetResGroup(group)
+	fromMap["contactGroup"] = schema.GetResContactGroup(contactGroup)
 	fromMapStr, _ := json.Marshal(fromMap)
 	go server.UserFriendNoticeMsg(group.OwnerUid, group.OwnerUid, string(fromMapStr), server.MSG_MEDIA_GROUP_CREATE)
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": group,
 	})
 }
 
@@ -114,6 +114,44 @@ func ActGroup(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": group,
+	})
+}
+
+// 3、搜索群
+func SearchGroup(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["keyword"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "条件不存在"})
+		return
+	}
+	keyword := utils.ToString(data["keyword"])
+	pageSize := uint32(utils.ToNumber(data["pageSize"]))
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	pageNum := uint32(utils.ToNumber(data["pageNum"]))
+	if pageNum == 0 {
+		pageNum = 1
+	}
+	groups, count, err := model.FindGroupByKeyword(pageSize, pageNum, keyword)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	var dataGroups []*schema.ResGroup
+	for _, v := range groups {
+		temp := schema.GetResGroup(v)
+		dataGroups = append(dataGroups, temp)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": map[string]interface{}{
+			"groups": dataGroups,
+			"count":  count,
+		},
 	})
 }

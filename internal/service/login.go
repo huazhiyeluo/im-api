@@ -1,10 +1,10 @@
 package service
 
 import (
+	"net/http"
 	"qqapi/internal/model"
 	"qqapi/internal/schema"
 	"qqapi/internal/utils"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +31,6 @@ func Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":  0,
 		"token": token,
-		"data":  schema.GetUser(user),
+		"data":  schema.GetResUser(user),
 	})
 }

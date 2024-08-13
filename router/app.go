@@ -21,10 +21,12 @@ func Router() *gin.Engine {
 	// user
 	r.POST("/user/editUser", service.EditUser)
 	r.POST("/user/actUser", service.ActUser)
+	r.POST("/user/searchUser", service.SearchUser)
 
 	// group
 	r.POST("/user/editGroup", service.EditGroup)
 	r.POST("/user/actGroup", service.ActGroup)
+	r.POST("/user/searchGroup", service.SearchGroup)
 
 	// contact_friend
 	r.POST("/user/getContactFriendGroup", service.GetContactFriendGroup)

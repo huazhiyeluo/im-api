@@ -13,7 +13,7 @@ type EditUser struct {
 }
 
 // 用户表
-type User struct {
+type ResUser struct {
 	Uid        uint64 `json:"uid"`        // UID
 	Username   string `json:"username"`   // 昵称
 	Email      string `json:"email"`      // 邮箱
@@ -24,13 +24,12 @@ type User struct {
 	Info       string `json:"info"`       // 简介
 	Exp        uint32 `json:"exp"`        // 用户经验
 	CreateTime int64  `json:"createTime"` // 创建时间
-	UpdateTime int64  `json:"updateTime"` // 更新时间
 }
 
 /********************************对接口********************************/
 
-func GetUser(m *model.User) *User {
-	return &User{
+func GetResUser(m *model.User) *ResUser {
+	return &ResUser{
 		Uid:        m.Uid,
 		Username:   m.Username,
 		Email:      m.Email,
@@ -41,6 +40,5 @@ func GetUser(m *model.User) *User {
 		Info:       m.Info,
 		Exp:        m.Exp,
 		CreateTime: m.CreateTime,
-		UpdateTime: m.UpdateTime,
 	}
 }

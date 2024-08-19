@@ -8,6 +8,7 @@ import (
 type EditUser struct {
 	Uid      uint64 `json:"uid"`      // UID
 	Username string `json:"username"` // 用户名
+	Nickname string `json:"nickname"` // 昵称
 	Avatar   string `json:"avatar"`   // 头像
 	Info     string `json:"info"`     // 简介
 }
@@ -15,7 +16,8 @@ type EditUser struct {
 // 用户表
 type ResUser struct {
 	Uid        uint64 `json:"uid"`        // UID
-	Username   string `json:"username"`   // 昵称
+	Username   string `json:"username"`   // 用户名
+	Nickname   string `json:"nickname"`   // 昵称
 	Email      string `json:"email"`      // 邮箱
 	Phone      string `json:"phone"`      // 手机号
 	Avatar     string `json:"avatar"`     // 头像
@@ -32,6 +34,7 @@ func GetResUser(m *model.User) *ResUser {
 	return &ResUser{
 		Uid:        m.Uid,
 		Username:   m.Username,
+		Nickname:   m.Nickname,
 		Email:      m.Email,
 		Phone:      m.Phone,
 		Avatar:     m.Avatar,

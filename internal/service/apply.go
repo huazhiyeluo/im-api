@@ -10,7 +10,6 @@ import (
 	"qqapi/internal/utils"
 	"qqapi/third_party/log"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -178,31 +177,21 @@ func OperateApply(c *gin.Context) {
 
 			tempApply := schema.GetResApplyUser(apply, fromUser, toUser)
 
-			var wg sync.WaitGroup
-			wg.Add(2)
-
 			//1、告诉请求的人消息
-			go func() {
-				defer wg.Done()
-				fromMap := make(map[string]interface{})
-				fromMap["apply"] = tempApply
-				fromMap["user"] = schema.GetResUser(toUser)
-				fromMap["contactFriend"] = schema.GetResContactFriend(fromContactFriend)
-				fromMapStr, _ := json.Marshal(fromMap)
-				go server.UserFriendNoticeMsg(apply.ToId, apply.FromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_AGREE)
-			}()
+			fromMap := make(map[string]interface{})
+			fromMap["apply"] = tempApply
+			fromMap["user"] = schema.GetResUser(toUser)
+			fromMap["contactFriend"] = schema.GetResContactFriend(fromContactFriend)
+			fromMapStr, _ := json.Marshal(fromMap)
+			go server.UserFriendNoticeMsg(apply.ToId, apply.FromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_AGREE)
+
 			//2、告诉收的人消息
-			go func() {
-				defer wg.Done()
-				toMap := make(map[string]interface{})
-				toMap["apply"] = tempApply
-				toMap["user"] = schema.GetResUser(fromUser)
-				toMap["contactFriend"] = schema.GetResContactFriend(toContactFriend)
-				toMapStr, _ := json.Marshal(toMap)
-				go server.UserFriendNoticeMsg(apply.FromId, apply.ToId, string(toMapStr), server.MSG_MEDIA_FRIEND_AGREE)
-			}()
-			wg.Wait()
-			go server.CreateMsg(&server.Message{FromId: apply.FromId, ToId: apply.ToId, MsgType: server.MSG_TYPE_SINGLE, MsgMedia: server.MSG_MEDIA_TEXT, Content: &server.MessageContent{Data: apply.Reason}})
+			toMap := make(map[string]interface{})
+			toMap["apply"] = tempApply
+			toMap["user"] = schema.GetResUser(fromUser)
+			toMap["contactFriend"] = schema.GetResContactFriend(toContactFriend)
+			toMapStr, _ := json.Marshal(toMap)
+			go server.UserFriendNoticeMsg(apply.FromId, apply.ToId, string(toMapStr), server.MSG_MEDIA_FRIEND_AGREE)
 		}
 		if apply.Type == 2 {
 			fromContactGroupData := &model.ContactGroup{
@@ -235,39 +224,25 @@ func OperateApply(c *gin.Context) {
 			fromUser, _ := model.FindUserByUid(apply.FromId)
 			tempApply := schema.GetResApplyGroup(apply, fromUser, group)
 
-			var wg sync.WaitGroup
-			wg.Add(3)
 			//1、告诉请求的人消息
-			go func() {
-				defer wg.Done()
-				fromMap := make(map[string]interface{})
-				fromMap["apply"] = tempApply
-				fromMap["group"] = schema.GetResGroup(group)
-				fromMap["contactGroup"] = schema.GetResContactGroup(fromContactGroup)
-				fromMapStr, _ := json.Marshal(fromMap)
-				go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_AGREE)
-			}()
+			fromMap := make(map[string]interface{})
+			fromMap["apply"] = tempApply
+			fromMapStr, _ := json.Marshal(fromMap)
+			go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_AGREE)
 
 			//2、告诉管理员消息
-			go func() {
-				defer wg.Done()
-				toMap := make(map[string]interface{})
-				toMap["apply"] = tempApply
-				toMapStr, _ := json.Marshal(toMap)
-				go server.UserFriendNoticeMsg(apply.FromId, group.OwnerUid, string(toMapStr), server.MSG_MEDIA_GROUP_AGREE)
-			}()
+			toMap := make(map[string]interface{})
+			toMap["apply"] = tempApply
+			toMapStr, _ := json.Marshal(toMap)
+			go server.UserFriendNoticeMsg(apply.FromId, group.OwnerUid, string(toMapStr), server.MSG_MEDIA_GROUP_AGREE)
 
 			//3、告诉群的人消息
-			go func() {
-				defer wg.Done()
-				toGroupMap := make(map[string]interface{})
-				toGroupMap["user"] = schema.GetResUser(fromUser)
-				toGroupMap["contactGroup"] = schema.GetResContactGroup(fromContactGroup)
-				toGroupMapStr, _ := json.Marshal(toGroupMap)
-				go server.UserGroupNoticeMsg(apply.ToId, string(toGroupMapStr), server.MSG_MEDIA_GROUP_AGREE)
-			}()
-			wg.Wait()
-			go server.CreateMsg(&server.Message{FromId: apply.FromId, ToId: apply.ToId, MsgType: server.MSG_TYPE_ROOM, MsgMedia: server.MSG_MEDIA_TEXT, Content: &server.MessageContent{Data: apply.Info}})
+			toGroupMap := make(map[string]interface{})
+			toGroupMap["user"] = schema.GetResUser(fromUser)
+			toGroupMap["group"] = schema.GetResGroup(group)
+			toGroupMap["contactGroup"] = schema.GetResContactGroup(fromContactGroup)
+			toGroupMapStr, _ := json.Marshal(toGroupMap)
+			go server.UserGroupNoticeMsg(apply.ToId, string(toGroupMapStr), server.MSG_MEDIA_GROUP_AGREE)
 		}
 
 	}

@@ -30,6 +30,7 @@ func EditUser(c *gin.Context) {
 	updateData := &model.User{
 		Uid:        data.Uid,
 		Username:   data.Username,
+		Nickname:   data.Nickname,
 		Info:       data.Info,
 		Avatar:     data.Avatar,
 		UpdateTime: nowtime,

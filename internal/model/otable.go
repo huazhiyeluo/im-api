@@ -3,7 +3,8 @@ package model
 // 1、用户表
 type User struct {
 	Uid        uint64 `gorm:"column:uid;primary_key;AUTO_INCREMENT"` // UID
-	Username   string `gorm:"column:username;NOT NULL"`              // 昵称
+	Username   string `gorm:"column:username;NOT NULL"`              // 用户名
+	Nickname   string `gorm:"column:nickname;NOT NULL"`              // 昵称
 	Password   string `gorm:"column:password;NOT NULL"`              // 密码
 	Email      string `gorm:"column:email;NOT NULL"`                 // 邮箱
 	Phone      string `gorm:"column:phone;NOT NULL"`                 // 手机号

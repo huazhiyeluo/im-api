@@ -119,7 +119,7 @@ func GetContactFriendList(c *gin.Context) {
 		return
 	}
 
-	toIds := []uint64{}
+	toIds := []uint64{fromId}
 	for _, v := range contacts {
 		toIds = append(toIds, v.ToId)
 	}
@@ -396,18 +396,8 @@ func ActContactFriend(c *gin.Context) {
 	}
 	dataContactFriend := schema.GetResContactFriend(contactFriend)
 
-	toUser, err := model.FindUserByUid(toId)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-	dataUser := schema.GetResUser(toUser)
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": map[string]interface{}{
-			"contactFriend": dataContactFriend,
-			"user":          dataUser,
-		},
+		"data": dataContactFriend,
 	})
 }

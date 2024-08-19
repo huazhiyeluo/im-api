@@ -17,6 +17,8 @@ var (
 	manager = NewManager()
 )
 
+var mu sync.Mutex
+
 func App() {
 	manager.Start()
 }
@@ -51,8 +53,10 @@ func (m *Manager) Start() {
 			log.Logger.Info(fmt.Sprintf("Start %v", string(jsonData)))
 			msg.Id = utils.GenGUID()
 			msg.CreateTime = time.Now().Unix()
-			m.StoreData(msg)
+			go m.StoreData(msg)
+			mu.Lock()
 			Dispatch(msg)
+			mu.Unlock()
 		}
 	}
 }

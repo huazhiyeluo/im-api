@@ -149,6 +149,7 @@ func JoinContactGroup(c *gin.Context) {
 	toId := uint64(utils.ToNumber(data["toId"]))
 	reason := utils.ToString(data["reason"])
 	remark := utils.ToString(data["remark"])
+	info := utils.ToString(data["info"])
 
 	fromUser, err := model.FindUserByUid(fromId)
 	if err != nil {
@@ -196,6 +197,7 @@ func JoinContactGroup(c *gin.Context) {
 		Type:        2,
 		Reason:      reason,
 		Remark:      remark,
+		Info:        info,
 		OperateTime: time.Now().Unix(),
 	}
 	apply, err = model.CreateApply(insertApplyData)
@@ -251,7 +253,6 @@ func QuitContactGroup(c *gin.Context) {
 
 		toMap := make(map[string]interface{})
 		toMap["group"] = schema.GetResGroup(group)
-		toMap["contactGroup"] = schema.GetResContactGroup(&model.ContactGroup{})
 		toMapStr, _ := json.Marshal(toMap)
 		go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DISBAND)
 
@@ -337,18 +338,8 @@ func ActContactGroup(c *gin.Context) {
 	}
 	dataContactGroup := schema.GetResContactGroup(contactGroup)
 
-	group, err := model.FindGroupByGroupId(toId)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
-		return
-	}
-	dataGroup := schema.GetResGroup(group)
-
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": map[string]interface{}{
-			"contactGroup": dataContactGroup,
-			"group":        dataGroup,
-		},
+		"data": dataContactGroup,
 	})
 }

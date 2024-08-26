@@ -55,10 +55,10 @@ const (
 	MSG_MEDIA_GROUP_DISBAND = 35 // 解散群
 
 	// media（type 4） 消息展示样式
-	MSG_MEDIA_PHONE_OFFER   = 1 // 发起聊天 | offer
-	MSG_MEDIA_PHONE_ANSWER  = 2 // 接通聊天 | answer
-	MSG_MEDIA_PHONE_ICE     = 3 // ICE候选
-	MSG_MEDIA_PHONE_QUIT    = 4 // 退出聊天
+	MSG_MEDIA_PHONE_OFFER  = 1 // 发起聊天 | offer
+	MSG_MEDIA_PHONE_ANSWER = 2 // 接通聊天 | answer
+	MSG_MEDIA_PHONE_ICE    = 3 // ICE候选
+	MSG_MEDIA_PHONE_QUIT   = 4 // 退出聊天
 
 )
 
@@ -105,6 +105,7 @@ func UpgradeWebSocket(c *gin.Context) (*websocket.Conn, error) {
 
 // chat连接
 func Chat(c *gin.Context) {
+	log.Logger.Info("QIM Chat")
 
 	query := c.Request.URL.Query()
 	uid := uint64(utils.StringToUint32(query.Get("uid")))
@@ -115,6 +116,7 @@ func Chat(c *gin.Context) {
 	if err != nil {
 		log.Logger.Info("Chat", log.Any("err", err))
 	}
+
 	nowtime := time.Now().Unix()
 	client := &Client{
 		Id:            utils.GenGUID(),
@@ -126,9 +128,9 @@ func Chat(c *gin.Context) {
 	}
 
 	manager.Register <- client
-
 	go client.ReadData()
 	go client.WriteData()
+
 }
 
 // 读取消息
@@ -283,6 +285,16 @@ func getSessionKey(uid uint64) string {
 	return sessionkey
 }
 
+func delSessionKey(uid uint64) error {
+	rkey := model.RksessionKey(uid)
+	err := utils.RDB.Del(context.TODO(), rkey).Err()
+	if err != nil {
+		log.Logger.Error(fmt.Sprintf("删除sessionKey失败: %v", err))
+		return err
+	}
+	return nil
+}
+
 func checkSessionKey(c *gin.Context, uid uint64) {
 	sessionKey := ""
 	session, _ := c.Request.Cookie("sessionKey")
@@ -291,16 +303,23 @@ func checkSessionKey(c *gin.Context, uid uint64) {
 		sessionKey = session.Value
 	}
 	oldSessionKey := getSessionKey(uid)
+	setSessionKey(uid, sessionKey)
+
 	if oldSessionKey != "" {
 		log.Logger.Info(fmt.Sprintf("QIM 1 : %v", uid))
 		if oldSessionKey != sessionKey {
 			log.Logger.Info(fmt.Sprintf("QIM 2 : %v", uid))
 			if oldclient, ok := manager.Clients.Load(uid); ok {
-				log.Logger.Info(fmt.Sprintf("QIM 下线: %v", uid))
+				log.Logger.Info(fmt.Sprintf("QIM 3 下线: %v", uid))
 				msg := &Message{FromId: uid, ToId: uid, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_OFFLINE_PACK, Content: &MessageContent{Data: "下线"}}
-				oldclient.(*Client).Message <- msg
+				// 先尝试发送下线消息，如果失败则直接关闭连接
+				if err := oldclient.(*Client).Conn.WriteJSON(msg); err != nil {
+					log.Logger.Error(fmt.Sprintf("QIM 4 发送下线消息失败: %v", err))
+				} else {
+					oldclient.(*Client).Conn.Close()
+					manager.Clients.Delete(oldclient.(*Client).Uid)
+				}
 			}
 		}
 	}
-	setSessionKey(uid, sessionKey)
 }

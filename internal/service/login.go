@@ -27,7 +27,6 @@ func Login(c *gin.Context) {
 	}
 
 	token := setToken(user.Uid)
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":  0,
 		"token": token,

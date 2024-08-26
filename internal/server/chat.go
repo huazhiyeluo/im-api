@@ -55,12 +55,11 @@ const (
 	MSG_MEDIA_GROUP_DISBAND = 35 // 解散群
 
 	// media（type 4） 消息展示样式
-	MSG_MEDIA_PHONE_CONTACT = 0 // 发起聊天
-	MSG_MEDIA_PHONE_QUIT    = 1 // 退出聊天
-	MSG_MEDIA_PHONE_OPEN    = 2 // 接通聊天
+	MSG_MEDIA_PHONE_OFFER   = 1 // 发起聊天 | offer
+	MSG_MEDIA_PHONE_ANSWER  = 2 // 接通聊天 | answer
 	MSG_MEDIA_PHONE_ICE     = 3 // ICE候选
-	MSG_MEDIA_PHONE_OFFER   = 4 // offer
-	MSG_MEDIA_PHONE_ANSWER  = 5 // answer
+	MSG_MEDIA_PHONE_QUIT    = 4 // 退出聊天
+
 )
 
 var upgrader = websocket.Upgrader{
@@ -238,23 +237,19 @@ func SendNoticeMsg(msg *Message) {
 }
 
 // 4 应答消息
+// media（type 4） 消息展示样式
+// MSG_MEDIA_PHONE_OFFER   = 1 // 发起聊天 | offer
+// MSG_MEDIA_PHONE_ANSWER  = 2 // 接通聊天 | answer
+// MSG_MEDIA_PHONE_ICE     = 3 // ICE候选
+// MSG_MEDIA_PHONE_QUIT    = 4 // 退出聊天
 func SendAckMsg(msg *Message) {
 	log.Logger.Info(fmt.Sprintf("SendAckMsg: %v ", msg))
 	// 将消息加入节点的消息队列
 	if v, ok := manager.Clients.Load(msg.ToId); ok {
 		client := v.(*Client)
-
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{4}) {
-			tempmsg := &Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_CONTACT, Content: &MessageContent{Data: ""}}
-			client.Message <- tempmsg
-			time.Sleep(1 * time.Second)
-			client.Message <- msg
-		} else {
-			client.Message <- msg
-		}
-
+		client.Message <- msg
 	} else {
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{4, 5}) {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{1, 2}) {
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_QUIT, Content: &MessageContent{Data: ""}})
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NOT_ONLINE, Content: &MessageContent{Data: "对方不在线"}})
 			go CreateMsg(&Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NO_CONNECT, Content: &MessageContent{Data: "呼叫未接通"}})

@@ -227,6 +227,8 @@ func OperateApply(c *gin.Context) {
 			//1、告诉请求的人消息
 			fromMap := make(map[string]interface{})
 			fromMap["apply"] = tempApply
+			fromMap["group"] = schema.GetResGroup(group)
+			fromMap["contactGroup"] = schema.GetResContactGroup(fromContactGroup)
 			fromMapStr, _ := json.Marshal(fromMap)
 			go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_AGREE)
 

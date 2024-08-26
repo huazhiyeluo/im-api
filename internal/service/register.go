@@ -19,10 +19,12 @@ func Register(c *gin.Context) {
 	}
 	nowtime := time.Now().Unix()
 	insertData := &model.User{
+		Nickname:   data.Nickname,
 		Username:   data.Username,
 		Password:   utils.GenMd5(data.Password),
 		Email:      "",
 		Phone:      "",
+		Avatar:     data.Avatar,
 		CreateTime: nowtime,
 	}
 	user, err := model.CreateUser(insertData)
@@ -30,9 +32,7 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
-
 	token := setToken(user.Uid)
-
 	c.JSON(http.StatusOK, gin.H{
 		"code":  0,
 		"token": token,

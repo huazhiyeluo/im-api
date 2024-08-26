@@ -92,7 +92,7 @@ func (m *Manager) StoreData(msg *Message) {
 		}
 	}
 	if utils.IsContainUint32(msg.MsgType, []uint32{4}) {
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{3, 4, 5}) {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{3}) {
 			return
 		}
 	}

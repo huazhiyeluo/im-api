@@ -10,20 +10,21 @@ import (
 
 // VisitorLogin 游客登录适配器
 type VisitorLogin struct {
-	in *schema.LoginData
-	pv *schema.PublicVar
+	cin *schema.CommonData
+	in  *schema.LoginData
+	pv  *schema.PublicVar
 }
 
 func (b *VisitorLogin) Verify() {
 	b.pv.Sid = Const_VISITOR
-	usermapDevice, err := model.GetUsermapDeviceByDeviceid(b.in.Deviceid)
+	usermapDevice, err := model.GetUsermapDeviceByDeviceid(b.cin.Deviceid)
 	if err != nil {
 		b.pv.Err = errors.New("DB Error")
 		return
 	}
 	if usermapDevice.Deviceid == "" {
 		m := &model.UsermapDevice{
-			Deviceid: b.in.Deviceid,
+			Deviceid: b.cin.Deviceid,
 			Siteuid:  utils.GenGUID(),
 		}
 		usermapDevice, err = model.CreateUsermapDevice(m)

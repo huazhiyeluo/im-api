@@ -35,36 +35,36 @@ func setToken(uid uint64) string {
 }
 
 // GetLoginAdapter 根据 platform 获取对应的适配器
-func GetLoginAdapter(in *schema.LoginData, pv *schema.PublicVar) (LoginAdapter, error) {
+func GetLoginAdapter(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar) (LoginAdapter, error) {
 	switch in.Platform {
 	case "visitor":
-		return &VisitorLogin{in: in, pv: pv}, nil
+		return &VisitorLogin{cin: cin, in: in, pv: pv}, nil
 	case "account":
-		return &AccountLogin{in: in, pv: pv}, nil
+		return &AccountLogin{cin: cin, in: in, pv: pv}, nil
 	case "facebook":
-		return &FacebookLogin{in: in, pv: pv}, nil
+		return &FacebookLogin{cin: cin, in: in, pv: pv}, nil
 	case "google":
-		return &GoogleLogin{in: in, pv: pv}, nil
+		return &GoogleLogin{cin: cin, in: in, pv: pv}, nil
 	default:
 		return nil, fmt.Errorf("不支持的平台类型：%s", in.Platform)
 	}
 }
 
-func Init(in *schema.LoginData, pv *schema.PublicVar) {
-	if in.Deviceid == "" {
+func Init(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar) {
+	if cin.Deviceid == "" {
 		pv.Err = errors.New("设备号不能为空")
 	}
 }
 
-func Action(in *schema.LoginData, pv *schema.PublicVar, adapter LoginAdapter) interface{} {
+func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, adapter LoginAdapter) interface{} {
 	adapter.IsNewUser()
 	nowtime := time.Now().Unix()
 	updates := make(map[string]interface{})
 	if pv.IsNewUser == 1 {
 		updates["nickname"] = pv.Nickname
 		updates["avatar"] = pv.Avatar
-		updates["devname"] = in.Devname
-		updates["deviceid"] = in.Deviceid
+		updates["devname"] = cin.Devname
+		updates["deviceid"] = cin.Deviceid
 		updates["reg_time"] = nowtime
 		updates["login_time"] = nowtime
 	} else {
@@ -74,8 +74,8 @@ func Action(in *schema.LoginData, pv *schema.PublicVar, adapter LoginAdapter) in
 		if pv.Avatar != "" {
 			updates["avatar"] = pv.Avatar
 		}
-		updates["devname"] = in.Devname
-		updates["deviceid"] = in.Deviceid
+		updates["devname"] = cin.Devname
+		updates["deviceid"] = cin.Deviceid
 		updates["login_time"] = nowtime
 	}
 	var updateData []*model.Fields
@@ -122,14 +122,14 @@ func Action(in *schema.LoginData, pv *schema.PublicVar, adapter LoginAdapter) in
 	return res
 }
 
-func Login(in *schema.LoginData) (interface{}, error) {
+func Login(cin *schema.CommonData, in *schema.LoginData) (interface{}, error) {
 	pv := &schema.PublicVar{}
-	adapter, err := GetLoginAdapter(in, pv)
+	adapter, err := GetLoginAdapter(cin, in, pv)
 	if err != nil {
 		return "", err
 	}
 	//1、初始化数据
-	Init(in, pv)
+	Init(cin, in, pv)
 	if pv.Err != nil {
 		return "", pv.Err
 	}
@@ -139,7 +139,7 @@ func Login(in *schema.LoginData) (interface{}, error) {
 		return "", pv.Err
 	}
 	//3、登录数据操作
-	res := Action(in, pv, adapter)
+	res := Action(cin, in, pv, adapter)
 	if pv.Err != nil {
 		return "", pv.Err
 	}

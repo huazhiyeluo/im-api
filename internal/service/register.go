@@ -45,9 +45,10 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	loginData := &schema.LoginData{Platform: "account", Deviceid: data.Deviceid, Devname: data.Devname, Username: data.Username, Password: data.Password, Nickname: data.Nickname, Avatar: data.Avatar}
+	loginData := &schema.LoginData{Platform: "account", Username: data.Username, Password: data.Password, Nickname: data.Nickname, Avatar: data.Avatar}
+	cin := schema.GetHeader(c)
 
-	res, err := login.Login(loginData)
+	res, err := login.Login(cin, loginData)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": err.Error()})
 		return

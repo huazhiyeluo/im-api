@@ -2,8 +2,6 @@ package schema
 
 type LoginData struct {
 	Platform string `json:"platform"` // 平台      visitor | account(用户名|手机号|邮箱) | facebook
-	Devname  string `json:"devname"`  // 设备名称
-	Deviceid string `json:"deviceid"` // 设备ID
 	Username string `json:"username"` // 用户名
 	Phone    string `json:"phone"`    // 手机号
 	Email    string `json:"email"`    // 邮箱

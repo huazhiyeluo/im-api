@@ -10,8 +10,9 @@ import (
 
 // GoogleLogin Google 登录适配器
 type GoogleLogin struct {
-	in *schema.LoginData
-	pv *schema.PublicVar
+	cin *schema.CommonData
+	in  *schema.LoginData
+	pv  *schema.PublicVar
 }
 
 func (b *GoogleLogin) Verify() {
@@ -85,7 +86,7 @@ func (b *GoogleLogin) IsNewUser() {
 func (b *GoogleLogin) BindVistor() *model.Usermap {
 	reply := &model.Usermap{}
 
-	usermapDevice, err := model.GetUsermapDeviceByDeviceid(b.in.Deviceid)
+	usermapDevice, err := model.GetUsermapDeviceByDeviceid(b.cin.Deviceid)
 	if err != nil {
 		b.pv.Err = errors.New("DB Error")
 		return reply

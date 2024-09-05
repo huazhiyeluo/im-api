@@ -52,7 +52,10 @@ func (m *Manager) Start() {
 			msg.Id = utils.GenGUID()
 			msg.CreateTime = time.Now().Unix()
 			go m.StoreData(msg)
-			Dispatch(msg)
+
+			if !(msg.MsgType == 1 && msg.FromId == msg.ToId) {
+				Dispatch(msg)
+			}
 		}
 	}
 }

@@ -1,25 +1,71 @@
 package model
 
-// 1、用户表
+// 1-1、用户表
 type User struct {
-	Uid        uint64 `gorm:"column:uid;primary_key;AUTO_INCREMENT"` // UID
-	Username   string `gorm:"column:username;NOT NULL"`              // 用户名
-	Nickname   string `gorm:"column:nickname;NOT NULL"`              // 昵称
-	Password   string `gorm:"column:password;NOT NULL"`              // 密码
-	Email      string `gorm:"column:email;NOT NULL"`                 // 邮箱
-	Phone      string `gorm:"column:phone;NOT NULL"`                 // 手机号
-	Avatar     string `gorm:"column:avatar;NOT NULL"`                // 头像
-	Sex        uint32 `gorm:"column:sex;NOT NULL"`                   // 性别： 0 未知 1男 2女
-	Birthday   int64  `gorm:"column:birthday;NOT NULL"`              // 生日
-	Info       string `gorm:"column:info;NOT NULL"`                  // 简介
-	Exp        uint32 `gorm:"column:exp;default:0;NOT NULL"`         // 用户经验
-	CreateTime int64  `gorm:"column:create_time;NOT NULL"`           // 创建时间
-	UpdateTime int64  `gorm:"column:update_time;NOT NULL"`           // 更新时间
+	Uid       uint64 `gorm:"column:uid;primary_key;"`       // UID
+	Nickname  string `gorm:"column:nickname;NOT NULL"`      // 昵称
+	Avatar    string `gorm:"column:avatar;NOT NULL"`        // 头像
+	Sex       uint32 `gorm:"column:sex;NOT NULL"`           // 性别： 0 未知 1男 2女
+	Birthday  int64  `gorm:"column:birthday;NOT NULL"`      // 生日
+	Info      string `gorm:"column:info;NOT NULL"`          // 简介
+	Exp       uint32 `gorm:"column:exp;default:0;NOT NULL"` // 用户经验
+	Devname   string `gorm:"column:devname;NOT NULL"`       // 邮箱
+	Deviceid  string `gorm:"column:deviceid;NOT NULL"`      // 手机号
+	RegTime   int64  `gorm:"column:reg_time;NOT NULL"`      // 注册时间
+	LoginTime int64  `gorm:"column:login_time;NOT NULL"`    // 登录时间
 }
 
 func (m *User) TableName() string {
 	return "qqim.user"
 }
+
+// 1-2、设备映射表
+type UsermapDevice struct {
+	Deviceid string `gorm:"column:deviceid;NOT NULL"` // 设备号
+	Siteuid  string `gorm:"column:siteuid;NOT NULL"`  // 平台UID
+}
+
+func (m *UsermapDevice) TableName() string {
+	return "qqim.usermap_device"
+}
+
+// 1-3、玩家平台ID与UID映射表
+type Usermap struct {
+	Uid     uint64 `gorm:"column:uid;primary_key;AUTO_INCREMENT"` // UID
+	Siteuid string `gorm:"column:siteuid;NOT NULL"`               // 平台UID
+	Sid     uint32 `gorm:"column:sid;default:0;NOT NULL"`         // 平台配置id| 0游客、1账号、2google 3fb
+}
+
+func (m *Usermap) TableName() string {
+	return "qqim.usermap"
+}
+
+// 1-4、玩家平台ID与UID映射表 - 绑定
+type UsermapBind struct {
+	Uid     uint64 `gorm:"column:uid;primary_key;AUTO_INCREMENT"` // UID
+	Siteuid string `gorm:"column:siteuid;NOT NULL"`               // 平台UID
+	Sid     uint32 `gorm:"column:sid;default:0;NOT NULL"`         // 平台配置id| 0游客、1账号、2google 3fb
+}
+
+func (m *UsermapBind) TableName() string {
+	return "qqim.usermap_bind"
+}
+
+// 1-5、 玩家平台ID与UID映射表-账号
+type UsermapSso struct {
+	Id       uint64 `gorm:"column:id;primary_key;AUTO_INCREMENT"` // ID
+	Siteuid  string `gorm:"column:siteuid;NOT NULL"`              // 平台UID
+	Phone    string `gorm:"column:phone;NOT NULL"`                // 电话号码
+	Email    string `gorm:"column:email;NOT NULL"`                // 邮箱
+	Username string `gorm:"column:username;NOT NULL"`             // 用户名
+	Password string `gorm:"column:password;NOT NULL"`             // 密码
+}
+
+func (m *UsermapSso) TableName() string {
+	return "qqim.usermap_sso"
+}
+
+//--------------------------------------------------------------------------------------------------------------------
 
 // 2、好友组表
 type FriendGroup struct {

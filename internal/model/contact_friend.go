@@ -21,7 +21,7 @@ func GetContactFriendList(fromId uint64) ([]*ContactFriend, error) {
 // 获取单个好友
 func GetContactFriendOne(fromId uint64, toId uint64) (*ContactFriend, error) {
 	m := &ContactFriend{}
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Find(&m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Find(&m).Error
 	if err != nil {
 		log.Print("GetContactFriendOne", err)
 	}

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"qqapi/internal/model"
 	"qqapi/internal/utils"
 	"qqapi/third_party/log"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -62,6 +62,8 @@ const (
 
 )
 
+var mu sync.Mutex
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
@@ -71,10 +73,11 @@ var upgrader = websocket.Upgrader{
 type Client struct {
 	Id            string          // 唯一标识符
 	Uid           uint64          // UID
+	Deviceid      string          // DeviceID
 	Conn          *websocket.Conn // websocket 连接
 	Message       chan *Message   // 消息
-	HeartbeatTime int64           //心跳时间
-	LoginTime     int64           //登录时间
+	HeartbeatTime int64           // 心跳时间
+	LoginTime     int64           // 登录时间
 }
 
 type MessageContent struct {
@@ -109,25 +112,37 @@ func Chat(c *gin.Context) {
 
 	query := c.Request.URL.Query()
 	uid := uint64(utils.StringToUint32(query.Get("uid")))
+	deviceid := getSessionKey(c)
 
-	checkSessionKey(c, uid)
+	log.Logger.Info(fmt.Sprintf("QIM 0: %v | %v", uid, deviceid))
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Logger.Info("Chat", log.Any("err", err))
+	}
+	mu.Lock()
+	defer mu.Unlock()
+
+	if oldclient, ok := manager.Clients.Load(uid); ok {
+		handleClientDisconnect(oldclient.(*Client), deviceid)
+	}
+
+	if oldclient, ok := manager.Clients.Load(uid); ok {
+		handleClientDisconnect(oldclient.(*Client), deviceid)
 	}
 
 	nowtime := time.Now().Unix()
 	client := &Client{
 		Id:            utils.GenGUID(),
 		Uid:           uid,
+		Deviceid:      deviceid,
 		Conn:          conn,
 		Message:       make(chan *Message),
 		HeartbeatTime: nowtime,
 		LoginTime:     nowtime,
 	}
-
 	manager.Register <- client
+
 	go client.ReadData()
 	go client.WriteData()
 
@@ -139,19 +154,7 @@ func (client *Client) ReadData() {
 		msg := &Message{}
 		err := client.Conn.ReadJSON(msg)
 		if err != nil {
-			// 记录错误类型
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Logger.Error(fmt.Sprintf("Liao ReadData Unexpected close error: %v", err))
-			} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				log.Logger.Info(fmt.Sprintf("Liao ReadData Normal close: %v", err))
-			} else {
-				var closeErr *websocket.CloseError
-				if errors.As(err, &closeErr) {
-					log.Logger.Error(fmt.Sprintf("Liao ReadData Close error: Code: %v, Text: %v", closeErr.Code, closeErr.Text))
-				} else {
-					log.Logger.Error(fmt.Sprintf("Liao ReadData Read error: %v", err))
-				}
-			}
+			handleReadError(err)
 			// 从管理器中注销客户端
 			manager.UnRegister <- client
 			log.Logger.Info(fmt.Sprintf("Liao Client unregistered: %v , %v", client.Id, client.Uid))
@@ -269,57 +272,47 @@ func SendBroadcastMsg(msg *Message) {
 	})
 }
 
-func setSessionKey(uid uint64, sessionkey string) string {
-	rkey := model.RksessionKey(uid)
-	utils.RDB.Set(context.TODO(), rkey, sessionkey, time.Minute*time.Duration(0))
-	utils.RDB.ExpireAt(context.TODO(), rkey, time.Now().Add(time.Minute*60*24*2))
-	return sessionkey
-}
-
-func getSessionKey(uid uint64) string {
-	rkey := model.RksessionKey(uid)
-	sessionkey, err := utils.RDB.Get(context.TODO(), rkey).Result()
-	if err != nil {
-		log.Logger.Info(fmt.Sprintf("%v", err))
+func handleReadError(err error) {
+	if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		log.Logger.Error(fmt.Sprintf("Liao ReadData Unexpected close error: %v", err))
+	} else if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+		log.Logger.Info(fmt.Sprintf("Liao ReadData Normal close: %v", err))
+	} else {
+		var closeErr *websocket.CloseError
+		if errors.As(err, &closeErr) {
+			log.Logger.Error(fmt.Sprintf("Liao ReadData Close error: Code: %v, Text: %v", closeErr.Code, closeErr.Text))
+		} else {
+			log.Logger.Error(fmt.Sprintf("Liao ReadData Read error: %v", err))
+		}
 	}
-	return sessionkey
 }
 
-func delSessionKey(uid uint64) error {
-	rkey := model.RksessionKey(uid)
-	err := utils.RDB.Del(context.TODO(), rkey).Err()
-	if err != nil {
-		log.Logger.Error(fmt.Sprintf("删除sessionKey失败: %v", err))
-		return err
-	}
-	return nil
-}
-
-func checkSessionKey(c *gin.Context, uid uint64) {
+func getSessionKey(c *gin.Context) string {
 	sessionKey := ""
 	session, _ := c.Request.Cookie("sessionKey")
-	log.Logger.Info(fmt.Sprintf("QIM session: %v", session))
 	if session != nil {
 		sessionKey = session.Value
 	}
-	oldSessionKey := getSessionKey(uid)
-	setSessionKey(uid, sessionKey)
+	return sessionKey
+}
 
-	if oldSessionKey != "" {
-		log.Logger.Info(fmt.Sprintf("QIM 1 : %v", uid))
-		if oldSessionKey != sessionKey {
-			log.Logger.Info(fmt.Sprintf("QIM 2 : %v", uid))
-			if oldclient, ok := manager.Clients.Load(uid); ok {
-				log.Logger.Info(fmt.Sprintf("QIM 3 下线: %v", uid))
-				msg := &Message{FromId: uid, ToId: uid, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_OFFLINE_PACK, Content: &MessageContent{Data: "下线"}}
-				// 先尝试发送下线消息，如果失败则直接关闭连接
-				if err := oldclient.(*Client).Conn.WriteJSON(msg); err != nil {
-					log.Logger.Error(fmt.Sprintf("QIM 4 发送下线消息失败: %v", err))
-				} else {
-					oldclient.(*Client).Conn.Close()
-					manager.Clients.Delete(oldclient.(*Client).Uid)
-				}
-			}
+func handleClientDisconnect(client *Client, currentDeviceid string) {
+	log.Logger.Info(fmt.Sprintf("QIM 1: %v", client.Deviceid))
+	log.Logger.Info(fmt.Sprintf("QIM 2: %v", currentDeviceid))
+
+	if client.Deviceid != currentDeviceid {
+		msg := &Message{
+			FromId:   client.Uid,
+			ToId:     client.Uid,
+			MsgType:  MSG_TYPE_NOTICE,
+			MsgMedia: MSG_MEDIA_OFFLINE_PACK,
+			Content:  &MessageContent{Data: "下线"},
+		}
+		if err := client.Conn.WriteJSON(msg); err != nil {
+			log.Logger.Error(fmt.Sprintf("QIM 4 发送下线消息失败: %v", err))
 		}
 	}
+
+	client.Conn.Close()
+	manager.Clients.Delete(client.Uid)
 }

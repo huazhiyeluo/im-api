@@ -85,7 +85,7 @@ func FindGroupByKeyword(pageSize uint32, pageNum uint32, keyword string) ([]*Gro
 	offset := int((pageNum - 1) * pageSize)
 	size := int(pageSize)
 
-	err := db.Limit(size).Offset(offset).Order("group_id asc").Find(&data).Debug().Error
+	err := db.Limit(size).Offset(offset).Order("group_id asc").Find(&data).Error
 	if err != nil {
 		log.Print("FindUserByKeyword", err)
 		return data, count, err

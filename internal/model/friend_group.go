@@ -9,7 +9,7 @@ import (
 func GetFriendGroup(ownUid uint64) ([]*FriendGroup, error) {
 	m := &FriendGroup{}
 	var data []*FriendGroup
-	err := utils.DB.Table(m.TableName()).Where("owner_uid = ? ", ownUid).Find(&data).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ? ", ownUid).Find(&data).Error
 	if err != nil {
 		log.Print("GetFriendGroup", err)
 	}
@@ -19,7 +19,7 @@ func GetFriendGroup(ownUid uint64) ([]*FriendGroup, error) {
 // 获取好友分组 ByName
 func GetFriendGroupByName(ownUid uint64, name string) (*FriendGroup, error) {
 	m := &FriendGroup{}
-	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?  and name = ? ", ownUid, name).Find(&m).Debug().Error
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?  and name = ? ", ownUid, name).Find(&m).Error
 	if err != nil {
 		log.Print("GetFriendGroupByName", err)
 	}

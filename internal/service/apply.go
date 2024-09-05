@@ -147,7 +147,7 @@ func OperateApply(c *gin.Context) {
 			fromContactFriendData := &model.ContactFriend{
 				FromId:        apply.FromId,
 				ToId:          apply.ToId,
-				FriendGroupId: 0,
+				FriendGroupId: apply.FriendGroupId,
 				Level:         1,
 				Remark:        apply.Remark,
 				JoinTime:      nowtime,

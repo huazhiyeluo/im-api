@@ -13,7 +13,9 @@ func UserStatusNoticeMsg(uid uint64, msgMedia uint32) {
 		log.Logger.Info(fmt.Sprintf("%v ", err))
 	}
 	for _, v := range contacts {
-		CreateMsg(&Message{FromId: v.FromId, ToId: v.ToId, MsgType: MSG_TYPE_NOTICE, MsgMedia: msgMedia, Content: &MessageContent{Data: "用户状态"}})
+		if v.ToId != uid {
+			CreateMsg(&Message{FromId: v.FromId, ToId: v.ToId, MsgType: MSG_TYPE_NOTICE, MsgMedia: msgMedia, Content: &MessageContent{Data: "用户状态"}})
+		}
 	}
 }
 
@@ -26,7 +28,6 @@ func UserInfoNoticeMsg(uid uint64, content string) {
 	for _, v := range contacts {
 		CreateMsg(&Message{FromId: v.FromId, ToId: v.ToId, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_USERINFO, Content: &MessageContent{Data: content}})
 	}
-	CreateMsg(&Message{FromId: uid, ToId: uid, MsgType: MSG_TYPE_NOTICE, MsgMedia: MSG_MEDIA_USERINFO, Content: &MessageContent{Data: content}})
 }
 
 // 2、用户好友

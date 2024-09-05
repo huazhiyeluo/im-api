@@ -6,6 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -75,6 +79,16 @@ func GenGUID() string {
 	return strings.Replace(u.String(), "-", "", 4)
 }
 
+func GetRandNum(min uint32, max uint32) uint32 {
+	if min == max {
+		return min
+	}
+	seedNum := time.Now().UnixNano()
+	rand.Seed(seedNum)
+	num := uint32(rand.Intn(int(max-min+1))) + min
+	return num
+}
+
 func IsContainUint32(str uint32, arr []uint32) bool {
 	for _, element := range arr {
 		if str == element {
@@ -82,6 +96,40 @@ func IsContainUint32(str uint32, arr []uint32) bool {
 		}
 	}
 	return false
+}
+
+// 发送GET请求
+// url:请求地址
+// response:请求返回的内容
+func HttpGet(targetUrl string) (response string, err error) {
+	// 解析代理URL
+	proxyURL := "http://127.0.0.1:8118"
+	proxy, err := url.Parse(proxyURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse proxy URL %s: %v", proxyURL, err)
+	}
+	// 创建带有代理设置的Transport
+	transport := &http.Transport{
+		Proxy: http.ProxyURL(proxy),
+	}
+	client := &http.Client{Timeout: 60 * time.Second, Transport: transport}
+	// client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(targetUrl)
+	if err != nil {
+		return "", fmt.Errorf("failed to get URL %s: %v", targetUrl, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %v", err)
+	}
+	response = string(body)
+	return response, nil
 }
 
 // CamelToSnakeCase 将驼峰命名转换为下划线命名

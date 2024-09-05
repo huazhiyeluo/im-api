@@ -17,14 +17,14 @@ func Router() *gin.Engine {
 
 	// register
 	r.POST("/user/register", service.Register)
+	r.POST("/user/bind", service.Bind)
 
 	// user
-	r.POST("/user/editUser", service.EditUser)
 	r.POST("/user/actUser", service.ActUser)
 	r.POST("/user/searchUser", service.SearchUser)
 
 	// group
-	r.POST("/user/editGroup", service.EditGroup)
+	r.POST("/user/createGroup", service.CreateGroup)
 	r.POST("/user/actGroup", service.ActGroup)
 	r.POST("/user/searchGroup", service.SearchGroup)
 

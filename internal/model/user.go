@@ -16,16 +16,6 @@ func CreateUser(m *User) (*User, error) {
 	return m, err
 }
 
-// 更新用户
-func UpdateUser(m *User) (*User, error) {
-	uid := m.Uid
-	err := utils.DB.Table(m.TableName()).Where("uid = ?", uid).Updates(m).Error
-	if err != nil {
-		log.Print("CreateUser", err)
-	}
-	return m, err
-}
-
 // 删除用户
 func DeleteUser(uid uint64) (*User, error) {
 	m := &User{}
@@ -77,7 +67,7 @@ func FindUserByKeyword(pageSize uint32, pageNum uint32, keyword string) ([]*User
 	db := utils.DB.Table(m.TableName())
 
 	if keyword != "" {
-		db.Where("uid like ? or username like ?", "%"+keyword+"%", "%"+keyword+"%")
+		db.Where("uid like ? or nickname like ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
 	err1 := db.Count(&count).Error
 	if err1 != nil {
@@ -87,7 +77,7 @@ func FindUserByKeyword(pageSize uint32, pageNum uint32, keyword string) ([]*User
 	offset := int((pageNum - 1) * pageSize)
 	size := int(pageSize)
 
-	err := db.Limit(size).Offset(offset).Order("uid asc").Find(&data).Debug().Error
+	err := db.Limit(size).Offset(offset).Order("uid asc").Find(&data).Error
 	if err != nil {
 		log.Print("FindUserByKeyword", err)
 		return data, count, err

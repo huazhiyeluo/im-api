@@ -13,7 +13,7 @@ import (
 )
 
 // 1、创建群
-func EditGroup(c *gin.Context) {
+func CreateGroup(c *gin.Context) {
 	data := schema.EditGroup{}
 	c.Bind(&data)
 

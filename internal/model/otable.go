@@ -2,17 +2,18 @@ package model
 
 // 1-1、用户表
 type User struct {
-	Uid       uint64 `gorm:"column:uid;primary_key;"`       // UID
-	Nickname  string `gorm:"column:nickname;NOT NULL"`      // 昵称
-	Avatar    string `gorm:"column:avatar;NOT NULL"`        // 头像
-	Sex       uint32 `gorm:"column:sex;NOT NULL"`           // 性别： 0 未知 1男 2女
-	Birthday  int64  `gorm:"column:birthday;NOT NULL"`      // 生日
-	Info      string `gorm:"column:info;NOT NULL"`          // 简介
-	Exp       uint32 `gorm:"column:exp;default:0;NOT NULL"` // 用户经验
-	Devname   string `gorm:"column:devname;NOT NULL"`       // 邮箱
-	Deviceid  string `gorm:"column:deviceid;NOT NULL"`      // 手机号
-	RegTime   int64  `gorm:"column:reg_time;NOT NULL"`      // 注册时间
-	LoginTime int64  `gorm:"column:login_time;NOT NULL"`    // 登录时间
+	Uid        uint64 `gorm:"column:uid;primary_key;"`       // UID
+	Nickname   string `gorm:"column:nickname;NOT NULL"`      // 昵称
+	Avatar     string `gorm:"column:avatar;NOT NULL"`        // 头像
+	Sex        uint32 `gorm:"column:sex;NOT NULL"`           // 性别： 0 未知 1男 2女
+	Birthday   int64  `gorm:"column:birthday;NOT NULL"`      // 生日
+	Info       string `gorm:"column:info;NOT NULL"`          // 简介
+	Exp        uint32 `gorm:"column:exp;default:0;NOT NULL"` // 用户经验
+	Devname    string `gorm:"column:devname;NOT NULL"`       // 邮箱
+	Deviceid   string `gorm:"column:deviceid;NOT NULL"`      // 手机号
+	RegTime    int64  `gorm:"column:reg_time;NOT NULL"`      // 注册时间
+	LoginTime  int64  `gorm:"column:login_time;NOT NULL"`    // 登录时间
+	UpdateTime int64  `gorm:"column:update_time;NOT NULL"`   // 修改时间
 }
 
 func (m *User) TableName() string {

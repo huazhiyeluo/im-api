@@ -5,7 +5,6 @@ import (
 	"qqapi/internal/login"
 	"qqapi/internal/schema"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,8 +13,6 @@ func Login(c *gin.Context) {
 	c.Bind(data)
 
 	cin := schema.GetHeader(c)
-
-	spew.Dump(cin)
 
 	res, err := login.Login(cin, data)
 	if err != nil {

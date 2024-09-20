@@ -226,7 +226,7 @@ func JoinContactGroup(c *gin.Context) {
 
 }
 
-// 2-2、群删除成员|群解散
+// 2-2、退出群|群解散
 func QuitContactGroup(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
@@ -290,6 +290,71 @@ func QuitContactGroup(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+	})
+}
+
+// 2-3、群删除成员-批量
+func DelContactGroup(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	tempFromIds := data["fromIds"].([]interface{})
+	fromIds := []uint64{}
+	for _, fromId := range tempFromIds {
+		fromIds = append(fromIds, uint64(utils.ToNumber(fromId)))
+	}
+	toId := uint64(utils.ToNumber(data["toId"]))
+
+	group, err := model.FindGroupByGroupId(toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "操作错误"})
+		return
+	}
+
+	contactGroups, err := model.FindContactGroupByFromIds(fromIds, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "操作错误"})
+		return
+	}
+	desFromIds := []uint64{}
+	for _, v := range contactGroups {
+		desFromIds = append(desFromIds, v.FromId)
+	}
+
+	group.Num = group.Num - uint32(len(desFromIds))
+	group, err = model.UpdateGroup(group)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	users, err := model.FindUserByUids(desFromIds)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	mapUsers := make(map[uint64]*model.User)
+	for _, v := range users {
+		mapUsers[v.Uid] = v
+	}
+
+	for _, v := range contactGroups {
+		toMap := make(map[string]interface{})
+		toMap["user"] = schema.GetResUser(mapUsers[v.FromId])
+		toMap["group"] = schema.GetResGroup(group)
+		toMapStr, _ := json.Marshal(toMap)
+		go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_GROUP_DELETE)
+	}
+
+	contactGroup, err := model.DeleteContactGroupByFromIds(desFromIds, toId)
+	if err != nil {
+		log.Logger.Info(fmt.Sprintf("%v", contactGroup))
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

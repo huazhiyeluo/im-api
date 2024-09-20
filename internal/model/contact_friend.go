@@ -11,7 +11,7 @@ import (
 func GetContactFriendList(fromId uint64) ([]*ContactFriend, error) {
 	m := &ContactFriend{}
 	var data []*ContactFriend
-	err := utils.DB.Table(m.TableName()).Where("from_id = ?", fromId).Find(&data).Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and join_time > ?", fromId, 0).Find(&data).Error
 	if err != nil {
 		log.Print("GetContactFriendList", err)
 	}
@@ -21,11 +21,23 @@ func GetContactFriendList(fromId uint64) ([]*ContactFriend, error) {
 // 获取单个好友
 func GetContactFriendOne(fromId uint64, toId uint64) (*ContactFriend, error) {
 	m := &ContactFriend{}
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Find(&m).Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ? and join_time > ?", fromId, toId, 0).Find(&m).Error
 	if err != nil {
 		log.Print("GetContactFriendOne", err)
 	}
 	return m, err
+}
+
+// 查找好友-指定好友
+func GetContactFriendByToIds(fromId uint64, toIds []uint64) ([]*ContactFriend, error) {
+	m := &ContactFriend{}
+	var data []*ContactFriend
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id in ? and join_time > ?", fromId, toIds, 0).Find(&data).Error
+	if err != nil {
+		log.Print("GetUserByUids", err)
+		return data, err
+	}
+	return data, err
 }
 
 // 创建好友关联

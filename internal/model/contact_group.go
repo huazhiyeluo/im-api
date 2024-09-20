@@ -59,12 +59,34 @@ func UpdateContactGroup(m *ContactGroup) (*ContactGroup, error) {
 	return m, err
 }
 
+// 查找群用户-指定用户
+func FindContactGroupByFromIds(fromIds []uint64, toId uint64) ([]*ContactGroup, error) {
+	m := &ContactGroup{}
+	var data []*ContactGroup
+	err := utils.DB.Table(m.TableName()).Where("from_id in ? and to_id = ?", fromIds, toId).Find(&data).Error
+	if err != nil {
+		log.Print("GetUserByUids", err)
+		return data, err
+	}
+	return data, err
+}
+
 // 删除群关联
 func DeleteContactGroup(fromId uint64, toId uint64) (*ContactGroup, error) {
 	m := &ContactGroup{}
 	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Delete(m).Error
 	if err != nil {
 		log.Print("DeleteContactGroup", err)
+	}
+	return m, err
+}
+
+// 删除群关联-指定用户
+func DeleteContactGroupByFromIds(fromIds []uint64, toId uint64) (*ContactGroup, error) {
+	m := &ContactGroup{}
+	err := utils.DB.Table(m.TableName()).Where("from_id in ? and to_id = ?", fromIds, toId).Delete(m).Error
+	if err != nil {
+		log.Print("DeleteContactGroupByFromIds", err)
 	}
 	return m, err
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"qqapi/internal/model"
 	"qqapi/internal/schema"
@@ -90,5 +91,44 @@ func SearchUser(c *gin.Context) {
 			"users": dataUsers,
 			"count": count,
 		},
+	})
+}
+
+// 4、更新设备Token
+func ActDeviceToken(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["uid"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		return
+	}
+	uid := uint64(utils.ToNumber(data["uid"]))
+
+	user, err := model.FindUserByUid(uid)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if user.Uid == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "用户不存在"})
+		return
+	}
+	nowtime := time.Now().Unix()
+
+	var updatesDeviceToken []*model.Fields
+	updatesDeviceToken = append(updatesDeviceToken, &model.Fields{Field: "last_login_time", Otype: 2, Value: nowtime})
+	for key, val := range data {
+		newkey := utils.CamelToSnakeCase(key)
+		updatesDeviceToken = append(updatesDeviceToken, &model.Fields{Field: newkey, Otype: 2, Value: val})
+	}
+	deviceToken, err := model.ActDeviceToken(uid, updatesDeviceToken)
+	if err != nil {
+		log.Print(deviceToken)
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
 	})
 }

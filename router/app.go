@@ -22,6 +22,7 @@ func Router() *gin.Engine {
 	// user
 	r.POST("/user/actUser", service.ActUser)
 	r.POST("/user/searchUser", service.SearchUser)
+	r.POST("/user/actDeviceToken", service.ActDeviceToken)
 
 	// group
 	r.POST("/user/createGroup", service.CreateGroup)
@@ -36,6 +37,7 @@ func Router() *gin.Engine {
 	r.POST("/user/getContactFriendList", service.GetContactFriendList)
 	r.POST("/user/getContactFriendOne", service.GetContactFriendOne)
 	r.POST("/user/addContactFriend", service.AddContactFriend)
+	r.POST("/user/inviteContactFriend", service.InviteContactFriend)
 	r.POST("/user/delContactFriend", service.DelContactFriend)
 	r.POST("/user/actContactFriend", service.ActContactFriend)
 
@@ -45,6 +47,7 @@ func Router() *gin.Engine {
 	r.POST("/user/getContactGroupUser", service.GetContactGroupUser)
 	r.POST("/user/joinContactGroup", service.JoinContactGroup)
 	r.POST("/user/quitContactGroup", service.QuitContactGroup)
+	r.POST("/user/delContactGroup", service.DelContactGroup)
 	r.POST("/user/actContactGroup", service.ActContactGroup)
 
 	// apply

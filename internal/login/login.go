@@ -68,12 +68,6 @@ func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, 
 		updates["reg_time"] = nowtime
 		updates["login_time"] = nowtime
 	} else {
-		if pv.Nickname != "" {
-			updates["nickname"] = pv.Nickname
-		}
-		if pv.Avatar != "" {
-			updates["avatar"] = pv.Avatar
-		}
 		updates["devname"] = cin.Devname
 		updates["deviceid"] = cin.Deviceid
 		updates["login_time"] = nowtime

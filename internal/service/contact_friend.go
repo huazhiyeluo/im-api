@@ -294,6 +294,43 @@ func AddContactFriend(c *gin.Context) {
 
 }
 
+// 2-2、邀请好友
+func InviteContactFriend(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	tempToIds := data["toIds"].([]interface{})
+	toIds := []uint64{}
+	for _, toId := range tempToIds {
+		toIds = append(toIds, uint64(utils.ToNumber(toId)))
+	}
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+	groupId := uint64(utils.ToNumber(data["groupId"]))
+
+	group, err := model.FindGroupByGroupId(groupId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "操作错误"})
+		return
+	}
+
+	contactFriends, err := model.GetContactFriendByToIds(fromId, toIds)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 2, "msg": "操作错误"})
+		return
+	}
+	for _, v := range contactFriends {
+		toMap := make(map[string]interface{})
+		toMap["group"] = schema.GetResGroup(group)
+		toMapStr, _ := json.Marshal(toMap)
+		go server.UserFriendMsg(fromId, v.ToId, string(toMapStr), server.MSG_MEDIA_INVITE)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+	})
+
+}
+
 // 2-2、删除好友
 func DelContactFriend(c *gin.Context) {
 	data := make(map[string]interface{})
@@ -371,16 +408,6 @@ func ActContactFriend(c *gin.Context) {
 		return
 	}
 	toId := uint64(utils.ToNumber(data["toId"]))
-
-	contactFriend, err := model.GetContactFriendOne(fromId, toId)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
-		return
-	}
-	if contactFriend.FromId == 0 {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "没有加好友"})
-		return
-	}
 	nowtime := time.Now().Unix()
 
 	var updatesContactFriend []*model.Fields
@@ -389,7 +416,7 @@ func ActContactFriend(c *gin.Context) {
 		newkey := utils.CamelToSnakeCase(key)
 		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: newkey, Otype: 2, Value: val})
 	}
-	contactFriend, err = model.ActContactFriend(fromId, toId, updatesContactFriend)
+	contactFriend, err := model.ActContactFriend(fromId, toId, updatesContactFriend)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return

@@ -1,8 +1,8 @@
 package model
 
 import (
-	"qqapi/internal/utils"
 	"log"
+	"qqapi/internal/utils"
 )
 
 // 创建消息

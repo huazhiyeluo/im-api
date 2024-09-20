@@ -35,12 +35,14 @@ const (
 	MSG_MEDIA_NO_CONNECT = 11 // 未接通
 	MSG_MEDIA_TIMES      = 12 // 通话时长
 	MSG_MEDIA_OFF        = 13 // 挂断电话
+	MSG_MEDIA_INVITE     = 21 // 邀请入群消息
 
 	// media（type 3） 消息展示样式
 	MSG_MEDIA_OFFLINE_PACK = 10 // 挤下线
 	MSG_MEDIA_ONLINE       = 11 // 上线
 	MSG_MEDIA_OFFLINE      = 12 // 下线
 	MSG_MEDIA_USERINFO     = 13 // 用户信息
+	MSG_MEDIA_GROUPINFO    = 14 // 群信息
 
 	MSG_MEDIA_FRIEND_ADD    = 21 // 添加好友
 	MSG_MEDIA_FRIEND_AGREE  = 22 // 成功添加好友
@@ -254,7 +256,7 @@ func SendAckMsg(msg *Message) {
 		client := v.(*Client)
 		client.Message <- msg
 	} else {
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{1, 2}) {
+		if utils.IsContainUint32(msg.MsgMedia, []uint32{MSG_MEDIA_PHONE_OFFER, MSG_MEDIA_PHONE_ANSWER}) {
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_ACK, MsgMedia: MSG_MEDIA_PHONE_QUIT, Content: &MessageContent{Data: ""}})
 			go CreateMsg(&Message{FromId: msg.ToId, ToId: msg.FromId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NOT_ONLINE, Content: &MessageContent{Data: "对方不在线"}})
 			go CreateMsg(&Message{FromId: msg.FromId, ToId: msg.ToId, MsgType: MSG_TYPE_SINGLE, MsgMedia: MSG_MEDIA_NO_CONNECT, Content: &MessageContent{Data: "呼叫未接通"}})

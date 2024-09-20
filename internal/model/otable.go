@@ -1,5 +1,11 @@
 package model
 
+type Fields struct {
+	Field string
+	Otype uint32
+	Value interface{}
+}
+
 // 1-1、用户表
 type User struct {
 	Uid        uint64 `gorm:"column:uid;primary_key;"`       // UID
@@ -193,8 +199,14 @@ func (m *Apply) TableName() string {
 	return "qqim.apply"
 }
 
-type Fields struct {
-	Field string
-	Otype uint32
-	Value interface{}
+// 1-1、用户表
+type DeviceToken struct {
+	Uid           uint64 `gorm:"column:uid;primary_key;"`         // UID
+	Token         string `gorm:"column:token;NOT NULL"`           // 消息token
+	Type          int64  `gorm:"column:type;NOT NULL"`            // 类型1为ios,2为android
+	LastLoginTime int64  `gorm:"column:last_login_time;NOT NULL"` // 最近登陆时间
+}
+
+func (m *DeviceToken) TableName() string {
+	return "qqim.devicetoken"
 }

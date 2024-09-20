@@ -53,12 +53,13 @@ func CreateGroup(c *gin.Context) {
 	}
 
 	insertContactGroupData := &model.ContactGroup{
-		FromId:   data.OwnerUid,
-		ToId:     group.GroupId,
-		Level:    1,
-		Remark:   "",
-		Nickname: "",
-		JoinTime: nowtime,
+		FromId:     data.OwnerUid,
+		ToId:       group.GroupId,
+		GroupPower: 2,
+		Level:      1,
+		Remark:     "",
+		Nickname:   "",
+		JoinTime:   nowtime,
 	}
 	contactGroup, err := model.CreateContactGroup(insertContactGroupData)
 	if err != nil {
@@ -76,6 +77,7 @@ func CreateGroup(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
+		"data": schema.GetResGroup(group),
 	})
 }
 
@@ -112,6 +114,11 @@ func ActGroup(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
+	toMap := make(map[string]interface{})
+	toMap["group"] = schema.GetResGroup(group)
+	toMapStr, _ := json.Marshal(toMap)
+	go server.GroupInfoNoticeMsg(groupId, string(toMapStr))
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 	})

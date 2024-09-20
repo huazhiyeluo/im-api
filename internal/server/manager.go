@@ -86,16 +86,12 @@ func (m *Manager) StoreData(msg *Message) {
 
 	jsonData, _ := json.Marshal(msg)
 	log.Logger.Info(fmt.Sprintf("StoreData %v", string(jsonData)))
-	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3, 4}) {
+	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3}) {
 		return
 	}
+
 	if utils.IsContainUint32(msg.MsgType, []uint32{3}) {
 		if utils.IsContainUint32(msg.MsgMedia, []uint32{10, 11, 12}) {
-			return
-		}
-	}
-	if utils.IsContainUint32(msg.MsgType, []uint32{4}) {
-		if utils.IsContainUint32(msg.MsgMedia, []uint32{3}) {
 			return
 		}
 	}
@@ -143,10 +139,10 @@ func (m *Manager) StoreRedisMessage(msg *Message) {
 	score := float64(cap(res)) + 1
 	count, err := utils.RDB.ZAdd(ctx, rkey, redis.Z{Score: score, Member: jsonData}).Result()
 	if err != nil {
-		log.Logger.Info(fmt.Sprintf("StoreRedis %v", err))
+		log.Logger.Info(fmt.Sprintf("StoreRedisMessage %v", err))
 	}
 	utils.RDB.ExpireAt(ctx, rkey, time.Now().Add(time.Hour*24*7))
-	log.Logger.Info(fmt.Sprintf("count %v StoreRedis %v", count, rkey))
+	log.Logger.Info(fmt.Sprintf("count %v StoreRedisMessage %v", count, rkey))
 
 }
 
@@ -156,11 +152,13 @@ func StoreUnreadMessage(uid uint64, msg *Message) {
 	if !utils.IsContainUint32(msg.MsgType, []uint32{1, 2, 3}) {
 		return
 	}
+
 	if utils.IsContainUint32(msg.MsgType, []uint32{3}) {
 		if utils.IsContainUint32(msg.MsgMedia, []uint32{10, 11, 12}) {
 			return
 		}
 	}
+
 	StoreUnreadRedisMessage(uid, msg)
 	go model.CreateMessageUnread(&model.MessageUnread{
 		Uid:        uid,
@@ -179,10 +177,10 @@ func StoreUnreadRedisMessage(uid uint64, msg *Message) {
 	}
 	count, err := utils.RDB.LPush(ctx, rkey, jsonData).Result()
 	if err != nil {
-		log.Logger.Info(fmt.Sprintf("StoreRedis %v", err))
+		log.Logger.Info(fmt.Sprintf("StoreUnreadRedisMessage %v", err))
 	}
 	utils.RDB.ExpireAt(ctx, rkey, time.Now().Add(time.Hour*24*7))
-	log.Logger.Info(fmt.Sprintf("count %v StoreUnreadMessage %v", count, rkey))
+	log.Logger.Info(fmt.Sprintf("count %v StoreUnreadRedisMessage %v", count, rkey))
 }
 
 // 设置创建通知
@@ -268,7 +266,7 @@ func PushUnreadMessage(uid uint64) {
 				CreateTime: msgMaps[v.MsgId].CreateTime,
 				Status:     1,
 			}
-			CreateMsg(msg)
+			SendMsg(msg, uid)
 		}
 	} else {
 		var i int64
@@ -281,7 +279,7 @@ func PushUnreadMessage(uid uint64) {
 			msg := &Message{}
 			json.Unmarshal([]byte(temp), msg)
 			msg.Status = 1
-			CreateMsg(msg)
+			SendMsg(msg, uid)
 		}
 	}
 	utils.RDB.Del(ctx, rkey)

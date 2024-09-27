@@ -19,7 +19,7 @@ func ActUser(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["uid"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	uid := uint64(utils.ToNumber(data["uid"]))
@@ -61,7 +61,7 @@ func SearchUser(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["keyword"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "条件不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "条件不存在"})
 		return
 	}
 	keyword := utils.ToString(data["keyword"])
@@ -100,7 +100,7 @@ func ActDeviceToken(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["uid"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	uid := uint64(utils.ToNumber(data["uid"]))

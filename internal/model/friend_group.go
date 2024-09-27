@@ -9,7 +9,7 @@ import (
 func GetFriendGroup(ownUid uint64) ([]*FriendGroup, error) {
 	m := &FriendGroup{}
 	var data []*FriendGroup
-	err := utils.DB.Table(m.TableName()).Where("owner_uid = ? ", ownUid).Find(&data).Error
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ? ", ownUid).Order("sort asc,friend_group_id asc").Find(&data).Error
 	if err != nil {
 		log.Print("GetFriendGroup", err)
 	}
@@ -26,6 +26,26 @@ func GetFriendGroupByName(ownUid uint64, name string) (*FriendGroup, error) {
 	return m, err
 }
 
+// 获取好友分组 GetFriendGroupByFriendGroupId
+func GetFriendGroupByFriendGroupId(friendGroupId uint32) (*FriendGroup, error) {
+	m := &FriendGroup{}
+	err := utils.DB.Table(m.TableName()).Where("friend_group_id = ?", friendGroupId).Find(&m).Error
+	if err != nil {
+		log.Print("GetFriendGroupByFriendGroupId", err)
+	}
+	return m, err
+}
+
+// 获取好友分组 IsDefault
+func GetFriendGroupByIsDefault(ownUid uint64) (*FriendGroup, error) {
+	m := &FriendGroup{}
+	err := utils.DB.Table(m.TableName()).Where("owner_uid = ?  and is_default = ? ", ownUid, 1).Find(&m).Error
+	if err != nil {
+		log.Print("GetFriendGroupByIsDefault", err)
+	}
+	return m, err
+}
+
 // 创建好友分组
 func CreateFriendGroup(m *FriendGroup) (*FriendGroup, error) {
 	err := utils.DB.Table(m.TableName()).Create(m).Error
@@ -38,7 +58,7 @@ func CreateFriendGroup(m *FriendGroup) (*FriendGroup, error) {
 // 更新好友分组
 func UpdateFriendGroup(m *FriendGroup) (*FriendGroup, error) {
 	friendGroupId := m.FriendGroupId
-	err := utils.DB.Table(m.TableName()).Where("friendGroupId = ?", friendGroupId).Updates(m).Error
+	err := utils.DB.Table(m.TableName()).Where("friend_group_id = ?", friendGroupId).Updates(m).Error
 	if err != nil {
 		log.Print("UpdateFriendGroup", err)
 	}

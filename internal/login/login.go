@@ -72,6 +72,14 @@ func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, 
 		updates["deviceid"] = cin.Deviceid
 		updates["login_time"] = nowtime
 	}
+	if in.Platform == "account" {
+		if in.Nickname != "" {
+			updates["nickname"] = in.Nickname
+		}
+		if in.Nickname != "" {
+			updates["avatar"] = in.Avatar
+		}
+	}
 	var updateData []*model.Fields
 	for key, val := range updates {
 		updateData = append(updateData, &model.Fields{Field: key, Otype: 2, Value: val})
@@ -95,12 +103,25 @@ func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, 
 	}
 
 	if pv.IsNewUser == 1 {
+
+		insertFriendGroupData := &model.FriendGroup{
+			OwnerUid:  pv.Uid,
+			Name:      "默认分组",
+			IsDefault: 1,
+		}
+		friendGroup, err := model.CreateFriendGroup(insertFriendGroupData)
+		if err != nil {
+			log.Printf("%v", friendGroup)
+			pv.Err = errors.New("DB Error")
+			return nil
+		}
+
 		toContactFriendData := &model.ContactFriend{
 			FromId:        pv.Uid,
 			ToId:          pv.Uid,
-			FriendGroupId: 0,
+			FriendGroupId: friendGroup.FriendGroupId,
 			Level:         1,
-			Remark:        tempUser.Nickname,
+			Remark:        "",
 			JoinTime:      nowtime,
 		}
 		toContactFriend, err := model.CreateContactFriend(toContactFriendData)

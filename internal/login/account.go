@@ -90,6 +90,15 @@ func (b *AccountLogin) BindVistor() *model.Usermap {
 		return reply
 	}
 
+	bindList, err := model.GetUserMapBindList(usermap.Uid, b.pv.Sid)
+	if err != nil {
+		b.pv.Err = errors.New("DB Error")
+		return reply
+	}
+	if len(bindList) > 0 {
+		return reply
+	}
+
 	usermapBind, err := model.CreateUsermapBind(&model.UsermapBind{Uid: usermap.Uid, Siteuid: b.pv.Siteuid, Sid: b.pv.Sid})
 	if err != nil {
 		b.pv.Err = errors.New("DB Error")

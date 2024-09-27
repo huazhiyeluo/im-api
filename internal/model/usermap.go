@@ -174,10 +174,10 @@ func GetUserMapBind(siteuid string, sid uint32) (*UsermapBind, error) {
 	return m, err
 }
 
-func GetUserMapBindList(uid uint64) ([]*UsermapBind, error) {
+func GetUserMapBindList(uid uint64, sid uint32) ([]*UsermapBind, error) {
 	m := &UsermapBind{}
 	var data []*UsermapBind
-	err := utils.DB.Table(m.TableName()).Where("uid = ?", uid).Find(&data).Error
+	err := utils.DB.Table(m.TableName()).Where("uid = ? and sid = ?", uid, sid).Find(&data).Error
 	if err != nil {
 		log.Print("GetUserMapList", err)
 		return data, err

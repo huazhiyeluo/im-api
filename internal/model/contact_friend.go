@@ -60,6 +60,16 @@ func UpdateContactFriend(m *ContactFriend) (*ContactFriend, error) {
 	return m, err
 }
 
+// 更新好友关联 批量更新联系人组
+func UpdateContactFriendByFriendGroupId(friendGroupId uint32, m *ContactFriend) (*ContactFriend, error) {
+	fromId := m.FromId
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and friend_group_id = ?", fromId, friendGroupId).Updates(m).Debug().Error
+	if err != nil {
+		log.Print("UpdateContactFriendByFriendGroupId", err)
+	}
+	return m, err
+}
+
 // 删除关联
 func DeleteContactFriend(fromId uint64, toId uint64) (*ContactFriend, error) {
 	m := &ContactFriend{}

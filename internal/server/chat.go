@@ -36,6 +36,7 @@ const (
 	MSG_MEDIA_TIMES      = 12 // 通话时长
 	MSG_MEDIA_OFF        = 13 // 挂断电话
 	MSG_MEDIA_INVITE     = 21 // 邀请入群消息
+	MSG_MEDIA_PERSON     = 22 // 个人名片消息
 
 	// media（type 3） 消息展示样式
 	MSG_MEDIA_OFFLINE_PACK = 10 // 挤下线

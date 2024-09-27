@@ -20,13 +20,13 @@ func GetContactGroupList(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 	if _, ok := data["fromId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 	contacts, err := model.GetContactGroupList(fromId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
@@ -36,7 +36,7 @@ func GetContactGroupList(c *gin.Context) {
 	}
 	groups, err := model.FindGroupByGroupIds(toIds)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 	var dataGroups []*schema.ResGroup
@@ -65,27 +65,27 @@ func GetContactGroupOne(c *gin.Context) {
 	data := make(map[string]interface{})
 	c.Bind(&data)
 	if _, ok := data["fromId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 
 	if _, ok := data["toId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "群不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "群不存在"})
 		return
 	}
 	toId := uint64(utils.ToNumber(data["toId"]))
 
 	contactGroup, err := model.GetContactGroupOne(fromId, toId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 	dataContactGroup := schema.GetResContactGroup(contactGroup)
 
 	group, err := model.FindGroupByGroupId(toId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 	dataGroup := schema.GetResGroup(group)
@@ -107,7 +107,7 @@ func GetContactGroupUser(c *gin.Context) {
 	groupId := uint64(utils.ToNumber(data["groupId"]))
 	contactUsers, err := model.GetGroupUser(groupId)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 
@@ -118,7 +118,7 @@ func GetContactGroupUser(c *gin.Context) {
 
 	toUsers, err := model.FindUserByUids(fromIds)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 	var dataUsers []*schema.ResUser
@@ -368,13 +368,13 @@ func ActContactGroup(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["fromId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	fromId := uint64(utils.ToNumber(data["fromId"]))
 
 	if _, ok := data["toId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "群不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "群不存在"})
 		return
 	}
 	toId := uint64(utils.ToNumber(data["toId"]))

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"qqapi/internal/model"
 	"qqapi/internal/schema"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 // GoogleLogin Google 登录适配器
@@ -103,7 +101,14 @@ func (b *GoogleLogin) BindVistor() *model.Usermap {
 		return reply
 	}
 
-	spew.Dump(usermap.Uid, b.pv.Siteuid, b.pv.Sid)
+	bindList, err := model.GetUserMapBindList(usermap.Uid, b.pv.Sid)
+	if err != nil {
+		b.pv.Err = errors.New("DB Error")
+		return reply
+	}
+	if len(bindList) > 0 {
+		return reply
+	}
 
 	usermapBind, err := model.CreateUsermapBind(&model.UsermapBind{Uid: usermap.Uid, Siteuid: b.pv.Siteuid, Sid: b.pv.Sid})
 	if err != nil {

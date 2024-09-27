@@ -9,6 +9,8 @@ type ResContactFriendGroup struct {
 	FriendGroupId uint32 `json:"friendGroupId"` // UID
 	OwnerUid      uint64 `json:"ownerUid"`      // 用户名
 	Name          string `json:"name"`          // 联系人组名
+	IsDefault     uint32 `json:"isDefault"`     // 用户名
+	Sort          uint32 `json:"sort"`          // 用户名
 }
 
 type ResContactFriend struct {
@@ -26,6 +28,14 @@ type ResContactFriend struct {
 }
 
 /********************************对接口********************************/
+
+// 好友组
+func GetResContactFriendGroup(group *model.FriendGroup) *ResContactFriendGroup {
+	tempFriendGroup := &ResContactFriendGroup{
+		FriendGroupId: group.FriendGroupId, OwnerUid: group.OwnerUid, Name: group.Name, IsDefault: group.IsDefault, Sort: group.Sort,
+	}
+	return tempFriendGroup
+}
 
 // 好友联系人
 func GetResContactFriend(contact *model.ContactFriend) *ResContactFriend {

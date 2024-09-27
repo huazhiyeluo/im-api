@@ -21,7 +21,7 @@ func GetApplyList(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["uid"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "UID不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
 		return
 	}
 	uid := uint64(utils.ToNumber(data["uid"]))
@@ -38,7 +38,7 @@ func GetApplyList(c *gin.Context) {
 	if utils.IsContainUint32(ttype, []uint32{0, 2}) {
 		ownGroups, err := model.GetGroupByOwnerUid(uid)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
 
@@ -48,7 +48,7 @@ func GetApplyList(c *gin.Context) {
 		}
 		groupApplys, err := model.GetGroupApplyList(uid, ownGroupIds)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
 		for _, v := range groupApplys {
@@ -58,7 +58,7 @@ func GetApplyList(c *gin.Context) {
 		}
 		allGroups, err := model.FindGroupByGroupIds(allGroupIds)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
 		for _, v := range allGroups {
@@ -69,7 +69,7 @@ func GetApplyList(c *gin.Context) {
 	if utils.IsContainUint32(ttype, []uint32{0, 1}) {
 		friendApplys, err := model.GetFriendApplyList(uid)
 		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
 		for _, v := range friendApplys {
@@ -81,7 +81,7 @@ func GetApplyList(c *gin.Context) {
 
 	allUsers, err := model.FindUserByUids(allUids)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "操作错误"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
 

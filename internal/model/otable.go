@@ -79,6 +79,8 @@ type FriendGroup struct {
 	FriendGroupId uint32 `gorm:"column:friend_group_id;primary_key;AUTO_INCREMENT"` // 用户组ID
 	OwnerUid      uint64 `gorm:"column:owner_uid;default:0;NOT NULL"`               // 拥有者
 	Name          string `gorm:"column:name;NOT NULL"`                              // 用户组名
+	Sort          uint32 `gorm:"column:sort;default:0;NOT NULL"`                    // 排序
+	IsDefault     uint32 `gorm:"column:is_default;is_default:0;NOT NULL"`           // 默认分组，0否 1是
 	CreateTime    int64  `gorm:"column:create_time;default:0;NOT NULL"`             // 创建时间
 }
 

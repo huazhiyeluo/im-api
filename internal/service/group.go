@@ -87,7 +87,7 @@ func ActGroup(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["groupId"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "用户组不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "用户组不存在"})
 		return
 	}
 	groupId := uint64(utils.ToNumber(data["groupId"]))
@@ -130,7 +130,7 @@ func SearchGroup(c *gin.Context) {
 	c.Bind(&data)
 
 	if _, ok := data["keyword"]; !ok {
-		c.JSON(http.StatusOK, gin.H{"code": 100, "message": "条件不存在"})
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "条件不存在"})
 		return
 	}
 	keyword := utils.ToString(data["keyword"])

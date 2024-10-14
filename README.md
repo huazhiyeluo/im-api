@@ -226,7 +226,7 @@ CREATE TABLE `usermap` (
   `sid` int unsigned NOT NULL DEFAULT '0' COMMENT '平台配置id| 0游客、1账号、2google 3fb',
   PRIMARY KEY (`uid`),
   UNIQUE KEY `siteuid` (`siteuid`,`sid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='玩家平台ID与UID映射表';
+) ENGINE=InnoDB DEFAULT DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='玩家平台ID与UID映射表';
 
 
 
@@ -241,7 +241,7 @@ CREATE TABLE `usermap_bind` (
   `sid` int unsigned NOT NULL COMMENT '平台配置id| 0游客、1账号、2google 3fb',
   PRIMARY KEY (`siteuid`,`sid`),
   KEY `uid` (`uid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='玩家平台ID与UID映射表-绑定';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='玩家平台ID与UID映射表-绑定';
 
 
 
@@ -255,7 +255,7 @@ CREATE TABLE `usermap_device` (
   `siteuid` varchar(64) NOT NULL COMMENT '平台UID',
   PRIMARY KEY (`deviceid`),
   UNIQUE KEY `siteuid` (`siteuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='设备映射表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备映射表';
 
 
 
@@ -276,7 +276,7 @@ CREATE TABLE `usermap_sso` (
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `phone` (`phone`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='玩家平台ID与UID映射表-账号';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='玩家平台ID与UID映射表-账号';
 
 
 ```

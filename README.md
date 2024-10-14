@@ -1,5 +1,23 @@
 ### QIM即时通讯(IM)客户端-简单版的类QQ微信
 
+配置文件地址：./config/app.yml
+
+```
+mysql:
+  dns: "root:xxx@tcp(xxx:xxx)/?charset=utf8mb4&parseTime=True&loc=Local"
+redis:
+  addr: "xxx:xxx"
+  password: "xxx"
+  db: 0
+port:
+  server: ":xxx"
+  udp: xxx
+cdn:
+  path: "xxx"
+  url: "xxx"
+
+```
+
 mysql数据库：
 ```
 

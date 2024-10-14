@@ -12,6 +12,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 0、单个群
+func GetOneGroup(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["groupId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "条件不存在"})
+		return
+	}
+	groupId := uint64(utils.ToNumber(data["groupId"]))
+
+	group, err := model.FindGroupByGroupId(groupId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": schema.GetResGroup(group),
+	})
+}
+
 // 1、创建群
 func CreateGroup(c *gin.Context) {
 	data := schema.EditGroup{}
@@ -52,16 +75,13 @@ func CreateGroup(c *gin.Context) {
 		return
 	}
 
-	insertContactGroupData := &model.ContactGroup{
-		FromId:     data.OwnerUid,
-		ToId:       group.GroupId,
-		GroupPower: 2,
-		Level:      1,
-		Remark:     "",
-		Nickname:   "",
-		JoinTime:   nowtime,
-	}
-	contactGroup, err := model.CreateContactGroup(insertContactGroupData)
+	var updatesContactGroup []*model.Fields
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "group_power", Otype: 2, Value: 2})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "level", Otype: 2, Value: 1})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "remark", Otype: 2, Value: ""})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "nickname", Otype: 2, Value: ""})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+	contactGroup, err := model.ActContactGroup(data.OwnerUid, group.GroupId, updatesContactGroup)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return

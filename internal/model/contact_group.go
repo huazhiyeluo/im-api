@@ -18,11 +18,33 @@ func GetContactGroupList(fromId uint64) ([]*ContactGroup, error) {
 	return data, err
 }
 
+// 获取群列表-有管理权限的
+func GetContactGroupManagerList(fromId uint64) ([]*ContactGroup, error) {
+	m := &ContactGroup{}
+	var data []*ContactGroup
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and group_power > ?", fromId, 0).Find(&data).Error
+	if err != nil {
+		log.Print("GetContactGroupManagerList", err)
+	}
+	return data, err
+}
+
 // 获取组成员-所有
 func GetGroupUser(toId uint64) ([]*ContactGroup, error) {
 	m := &ContactGroup{}
 	var data []*ContactGroup
 	err := utils.DB.Table(m.TableName()).Where("to_id = ?", toId).Find(&data).Error
+	if err != nil {
+		log.Print("GetGroupUser", err)
+	}
+	return data, err
+}
+
+// 获取组成员-所有-有管理权限的
+func GetGroupUserManager(toId uint64) ([]*ContactGroup, error) {
+	m := &ContactGroup{}
+	var data []*ContactGroup
+	err := utils.DB.Table(m.TableName()).Where("to_id = ? and group_power > ?", toId, 0).Find(&data).Error
 	if err != nil {
 		log.Print("GetGroupUser", err)
 	}
@@ -35,26 +57,6 @@ func GetContactGroupOne(fromId uint64, toId uint64) (*ContactGroup, error) {
 	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Find(&m).Error
 	if err != nil {
 		log.Print("GetGroupContactOne", err)
-	}
-	return m, err
-}
-
-// 创建群关联
-func CreateContactGroup(m *ContactGroup) (*ContactGroup, error) {
-	err := utils.DB.Table(m.TableName()).Create(m).Error
-	if err != nil {
-		log.Print("CreateContactGroup", err)
-	}
-	return m, err
-}
-
-// 更新群关联
-func UpdateContactGroup(m *ContactGroup) (*ContactGroup, error) {
-	fromId := m.FromId
-	toId := m.ToId
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Updates(m).Error
-	if err != nil {
-		log.Print("UpdateContactGroup", err)
 	}
 	return m, err
 }

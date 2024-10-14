@@ -403,6 +403,109 @@ func ActContactGroup(c *gin.Context) {
 	}
 	dataContactGroup := schema.GetResContactGroup(contactGroup)
 
+	toMap := make(map[string]interface{})
+	toMap["contactGroup"] = dataContactGroup
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_CONTACT_GROUP_UPDATE)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": dataContactGroup,
+	})
+}
+
+// 4-1、添加群管理员
+func AddGroupManger(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["fromId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
+		return
+	}
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+
+	if _, ok := data["toId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "群不存在"})
+		return
+	}
+	toId := uint64(utils.ToNumber(data["toId"]))
+
+	contactGroup, err := model.GetContactGroupOne(fromId, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if contactGroup.FromId == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "没有加入群"})
+		return
+	}
+	nowtime := time.Now().Unix()
+
+	var updatesContactGroup []*model.Fields
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "update_time", Otype: 2, Value: nowtime})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "group_power", Otype: 2, Value: 1})
+	contactGroup, err = model.ActContactGroup(fromId, toId, updatesContactGroup)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	dataContactGroup := schema.GetResContactGroup(contactGroup)
+
+	toMap := make(map[string]interface{})
+	toMap["contactGroup"] = dataContactGroup
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_CONTACT_GROUP_UPDATE)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": dataContactGroup,
+	})
+}
+
+// 4-2、删除群管理员
+func DelGroupManger(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["fromId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "UID不存在"})
+		return
+	}
+	fromId := uint64(utils.ToNumber(data["fromId"]))
+
+	if _, ok := data["toId"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "群不存在"})
+		return
+	}
+	toId := uint64(utils.ToNumber(data["toId"]))
+
+	contactGroup, err := model.GetContactGroupOne(fromId, toId)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	if contactGroup.FromId == 0 {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "没有加入群"})
+		return
+	}
+	nowtime := time.Now().Unix()
+
+	var updatesContactGroup []*model.Fields
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "update_time", Otype: 2, Value: nowtime})
+	updatesContactGroup = append(updatesContactGroup, &model.Fields{Field: "group_power", Otype: 2, Value: 0})
+	contactGroup, err = model.ActContactGroup(fromId, toId, updatesContactGroup)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+	dataContactGroup := schema.GetResContactGroup(contactGroup)
+
+	toMap := make(map[string]interface{})
+	toMap["contactGroup"] = dataContactGroup
+	toMapStr, _ := json.Marshal(toMap)
+	go server.UserGroupNoticeMsg(toId, string(toMapStr), server.MSG_MEDIA_CONTACT_GROUP_UPDATE)
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": dataContactGroup,

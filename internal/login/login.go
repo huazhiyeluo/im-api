@@ -116,15 +116,12 @@ func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, 
 			return nil
 		}
 
-		toContactFriendData := &model.ContactFriend{
-			FromId:        pv.Uid,
-			ToId:          pv.Uid,
-			FriendGroupId: friendGroup.FriendGroupId,
-			Level:         1,
-			Remark:        "",
-			JoinTime:      nowtime,
-		}
-		toContactFriend, err := model.CreateContactFriend(toContactFriendData)
+		var updatesContactFriend []*model.Fields
+		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "friend_group_id", Otype: 2, Value: friendGroup.FriendGroupId})
+		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "level", Otype: 2, Value: 1})
+		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "remark", Otype: 2, Value: ""})
+		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+		toContactFriend, err := model.ActContactFriend(pv.Uid, pv.Uid, updatesContactFriend)
 		if err != nil {
 			log.Printf("%v", toContactFriend)
 			pv.Err = errors.New("DB Error")

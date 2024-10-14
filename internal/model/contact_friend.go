@@ -18,10 +18,10 @@ func GetContactFriendList(fromId uint64) ([]*ContactFriend, error) {
 	return data, err
 }
 
-// 获取单个好友
+// 获取单个好友（联系人，可以不是好友）
 func GetContactFriendOne(fromId uint64, toId uint64) (*ContactFriend, error) {
 	m := &ContactFriend{}
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ? and join_time > ?", fromId, toId, 0).Find(&m).Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Find(&m).Error
 	if err != nil {
 		log.Print("GetContactFriendOne", err)
 	}
@@ -32,32 +32,12 @@ func GetContactFriendOne(fromId uint64, toId uint64) (*ContactFriend, error) {
 func GetContactFriendByToIds(fromId uint64, toIds []uint64) ([]*ContactFriend, error) {
 	m := &ContactFriend{}
 	var data []*ContactFriend
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id in ? and join_time > ?", fromId, toIds, 0).Find(&data).Error
+	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id in ?", fromId, toIds).Find(&data).Error
 	if err != nil {
 		log.Print("GetUserByUids", err)
 		return data, err
 	}
 	return data, err
-}
-
-// 创建好友关联
-func CreateContactFriend(m *ContactFriend) (*ContactFriend, error) {
-	err := utils.DB.Table(m.TableName()).Create(m).Error
-	if err != nil {
-		log.Print("CreateContactFriend", err)
-	}
-	return m, err
-}
-
-// 更新好友关联
-func UpdateContactFriend(m *ContactFriend) (*ContactFriend, error) {
-	fromId := m.FromId
-	toId := m.ToId
-	err := utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Updates(m).Error
-	if err != nil {
-		log.Print("UpdateContactFriend", err)
-	}
-	return m, err
 }
 
 // 更新好友关联 批量更新联系人组
@@ -102,13 +82,13 @@ func ActContactFriend(fromId uint64, toId uint64, fields []*Fields) (*ContactFri
 	if m.FromId == 0 {
 		updates["from_id"] = fromId
 		updates["to_id"] = toId
-		err = utils.DB.Table(m.TableName()).Create(updates).Error
+		err = utils.DB.Table(m.TableName()).Create(updates).Debug().Error
 		if err != nil {
 			log.Print("ActContactFriend", err)
 			return m, err
 		}
 	} else {
-		err = utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Updates(updates).Error
+		err = utils.DB.Table(m.TableName()).Where("from_id = ? and to_id = ?", fromId, toId).Updates(updates).Debug().Error
 		if err != nil {
 			log.Print("ActContactFriend", err)
 			return m, err

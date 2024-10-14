@@ -20,11 +20,13 @@ func Router() *gin.Engine {
 	r.POST("/user/bind", service.Bind)
 
 	// user
+	r.POST("/user/getOneUser", service.GetOneUser)
 	r.POST("/user/actUser", service.ActUser)
 	r.POST("/user/searchUser", service.SearchUser)
 	r.POST("/user/actDeviceToken", service.ActDeviceToken)
 
 	// group
+	r.POST("/user/getOneGroup", service.GetOneGroup)
 	r.POST("/user/createGroup", service.CreateGroup)
 	r.POST("/user/actGroup", service.ActGroup)
 	r.POST("/user/searchGroup", service.SearchGroup)
@@ -50,6 +52,8 @@ func Router() *gin.Engine {
 	r.POST("/user/quitContactGroup", service.QuitContactGroup)
 	r.POST("/user/delContactGroup", service.DelContactGroup)
 	r.POST("/user/actContactGroup", service.ActContactGroup)
+	r.POST("/user/addGroupManger", service.AddGroupManger)
+	r.POST("/user/delGroupManger", service.DelGroupManger)
 
 	// apply
 	r.POST("/user/getApplyList", service.GetApplyList)

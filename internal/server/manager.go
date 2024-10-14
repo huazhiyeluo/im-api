@@ -49,10 +49,7 @@ func (m *Manager) Start() {
 			// 处理接收到的消息
 			jsonData, _ := json.Marshal(msg)
 			log.Logger.Info(fmt.Sprintf("Start %v", string(jsonData)))
-			msg.Id = utils.GenGUID()
-			msg.CreateTime = time.Now().Unix()
 			go m.StoreData(msg)
-
 			if !(msg.MsgType == 1 && msg.FromId == msg.ToId) {
 				Dispatch(msg)
 			}
@@ -187,6 +184,13 @@ func StoreUnreadRedisMessage(uid uint64, msg *Message) {
 func CreateMsg(msg *Message) {
 	jsonData, _ := json.Marshal(msg)
 	log.Logger.Info(fmt.Sprintf("Liao CreateMsg %v", string(jsonData)))
+	if msg.Id == "" {
+		msg.Id = utils.GenGUID()
+	}
+	if msg.CreateTime == 0 {
+		msg.CreateTime = time.Now().Unix()
+	}
+
 	manager.Message <- msg
 }
 

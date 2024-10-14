@@ -13,6 +13,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 0、单个用户
+func GetOneUser(c *gin.Context) {
+	data := make(map[string]interface{})
+	c.Bind(&data)
+
+	if _, ok := data["uid"]; !ok {
+		c.JSON(http.StatusOK, gin.H{"code": 100, "msg": "条件不存在"})
+		return
+	}
+	uid := uint64(utils.ToNumber(data["uid"]))
+
+	user, err := model.FindUserByUid(uid)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": schema.GetResUser(user),
+	})
+}
+
 // 1、编辑用户
 func ActUser(c *gin.Context) {
 	data := make(map[string]interface{})

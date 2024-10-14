@@ -50,12 +50,13 @@ const (
 	MSG_MEDIA_FRIEND_REFUSE = 23 // 拒绝添加好友
 	MSG_MEDIA_FRIEND_DELETE = 24 // 删除好友
 
-	MSG_MEDIA_GROUP_CREATE  = 30 // 创建群
-	MSG_MEDIA_GROUP_JOIN    = 31 // 添加群
-	MSG_MEDIA_GROUP_AGREE   = 32 // 成功添加群
-	MSG_MEDIA_GROUP_REFUSE  = 33 // 拒绝添加群
-	MSG_MEDIA_GROUP_DELETE  = 34 // 退出群
-	MSG_MEDIA_GROUP_DISBAND = 35 // 解散群
+	MSG_MEDIA_GROUP_CREATE         = 30 // 创建群
+	MSG_MEDIA_GROUP_JOIN           = 31 // 添加群
+	MSG_MEDIA_GROUP_AGREE          = 32 // 成功添加群
+	MSG_MEDIA_GROUP_REFUSE         = 33 // 拒绝添加群
+	MSG_MEDIA_GROUP_DELETE         = 34 // 退出群
+	MSG_MEDIA_GROUP_DISBAND        = 35 // 解散群
+	MSG_MEDIA_CONTACT_GROUP_UPDATE = 36 // 群联系人更新
 
 	// media（type 4） 消息展示样式
 	MSG_MEDIA_PHONE_OFFER  = 1 // 发起聊天 | offer
@@ -84,9 +85,10 @@ type Client struct {
 }
 
 type MessageContent struct {
-	Data string `json:"data"` //数据
-	Url  string `json:"url"`  //链接地址
-	Name string `json:"name"` //文件名
+	Data    string `json:"data"`    // 数据
+	Url     string `json:"url"`     // 链接地址
+	Name    string `json:"name"`    // 文件名
+	QuoteId string `json:"quoteId"` // 引用ID
 }
 
 type Message struct {

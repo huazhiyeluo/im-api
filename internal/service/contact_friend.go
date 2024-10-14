@@ -240,12 +240,12 @@ func GetContactFriendOne(c *gin.Context) {
 	}
 	toId := uint64(utils.ToNumber(data["toId"]))
 
-	ContactFriend, err := model.GetContactFriendOne(fromId, toId)
+	contactFriend, err := model.GetContactFriendOne(fromId, toId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 3, "msg": "操作错误"})
 		return
 	}
-	dataContactFriend := schema.GetResContactFriend(ContactFriend)
+	dataContactFriend := schema.GetResContactFriend(contactFriend)
 
 	toUser, err := model.FindUserByUid(toId)
 	if err != nil {
@@ -303,12 +303,12 @@ func AddContactFriend(c *gin.Context) {
 		return
 	}
 
-	cantactUser, err := model.GetContactFriendOne(fromId, toId)
+	cantactFriend, err := model.GetContactFriendOne(fromId, toId)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 		return
 	}
-	if cantactUser.FromId != 0 {
+	if cantactFriend.FromId != 0 && cantactFriend.JoinTime > 0 {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经是好友"})
 		return
 	}

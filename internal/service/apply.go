@@ -36,17 +36,17 @@ func GetApplyList(c *gin.Context) {
 	tempAllUsers := make(map[uint64]*model.User)
 	tempAllGroups := make(map[uint64]*model.Group)
 	if utils.IsContainUint32(ttype, []uint32{0, 2}) {
-		ownGroups, err := model.GetGroupByOwnerUid(uid)
+		managerContactGroups, err := model.GetContactGroupManagerList(uid)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
 		}
 
-		ownGroupIds := []uint64{}
-		for _, group := range ownGroups {
-			ownGroupIds = append(ownGroupIds, group.GroupId)
+		managerGroupIds := []uint64{}
+		for _, contactGroup := range managerContactGroups {
+			managerGroupIds = append(managerGroupIds, contactGroup.ToId)
 		}
-		groupApplys, err := model.GetGroupApplyList(uid, ownGroupIds)
+		groupApplys, err := model.GetGroupApplyList(uid, managerGroupIds)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
 			return
@@ -144,37 +144,40 @@ func OperateApply(c *gin.Context) {
 			return
 		}
 		if apply.Type == 1 {
-			fromContactFriendData := &model.ContactFriend{
-				FromId:        apply.FromId,
-				ToId:          apply.ToId,
-				FriendGroupId: apply.FriendGroupId,
-				Level:         1,
-				Remark:        apply.Remark,
-				JoinTime:      nowtime,
-			}
-			fromContactFriend, err := model.CreateContactFriend(fromContactFriendData)
+			//1、主数据
+			var updatesFromContactFriend []*model.Fields
+			updatesFromContactFriend = append(updatesFromContactFriend, &model.Fields{Field: "friend_group_id", Otype: 2, Value: apply.FriendGroupId})
+			updatesFromContactFriend = append(updatesFromContactFriend, &model.Fields{Field: "level", Otype: 2, Value: 1})
+			updatesFromContactFriend = append(updatesFromContactFriend, &model.Fields{Field: "remark", Otype: 2, Value: apply.Remark})
+			updatesFromContactFriend = append(updatesFromContactFriend, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+			fromContactFriend, err := model.ActContactFriend(apply.FromId, apply.ToId, updatesFromContactFriend)
 			if err != nil {
 				log.Logger.Info(fmt.Sprintf("%v", fromContactFriend))
 				c.JSON(http.StatusOK, gin.H{"code": 4, "msg": "操作错误"})
 				return
 			}
-			toContactFriendData := &model.ContactFriend{
-				FromId:        apply.ToId,
-				ToId:          apply.FromId,
-				FriendGroupId: 0,
-				Level:         1,
-				Remark:        "",
-				JoinTime:      nowtime,
+
+			//1、从数据
+			defaultFriendGroup, err := model.GetFriendGroupByIsDefault(apply.ToId)
+			if err != nil {
+				log.Logger.Info(fmt.Sprintf("%v", defaultFriendGroup))
+				c.JSON(http.StatusOK, gin.H{"code": 5, "msg": "操作错误"})
+				return
 			}
-			toContactFriend, err := model.CreateContactFriend(toContactFriendData)
+			var updatesToContactFriend []*model.Fields
+			updatesToContactFriend = append(updatesToContactFriend, &model.Fields{Field: "friend_group_id", Otype: 2, Value: defaultFriendGroup.FriendGroupId})
+			updatesToContactFriend = append(updatesToContactFriend, &model.Fields{Field: "level", Otype: 2, Value: 1})
+			updatesToContactFriend = append(updatesToContactFriend, &model.Fields{Field: "remark", Otype: 2, Value: ""})
+			updatesToContactFriend = append(updatesToContactFriend, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+			toContactFriend, err := model.ActContactFriend(apply.ToId, apply.FromId, updatesToContactFriend)
 			if err != nil {
 				log.Logger.Info(fmt.Sprintf("%v", toContactFriend))
 				c.JSON(http.StatusOK, gin.H{"code": 5, "msg": "操作错误"})
 				return
 			}
+
 			fromUser, _ := model.FindUserByUid(apply.FromId)
 			toUser, _ := model.FindUserByUid(apply.ToId)
-
 			tempApply := schema.GetResApplyUser(apply, fromUser, toUser)
 
 			//1、告诉请求的人消息
@@ -194,15 +197,12 @@ func OperateApply(c *gin.Context) {
 			go server.UserFriendNoticeMsg(apply.FromId, apply.ToId, string(toMapStr), server.MSG_MEDIA_FRIEND_AGREE)
 		}
 		if apply.Type == 2 {
-			fromContactGroupData := &model.ContactGroup{
-				FromId:   apply.FromId,
-				ToId:     apply.ToId,
-				Level:    1,
-				Remark:   apply.Remark,
-				Nickname: "",
-				JoinTime: nowtime,
-			}
-			fromContactGroup, err := model.CreateContactGroup(fromContactGroupData)
+			var updatesFromContactGroup []*model.Fields
+			updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "level", Otype: 2, Value: 1})
+			updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "remark", Otype: 2, Value: apply.Remark})
+			updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "nickname", Otype: 2, Value: ""})
+			updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+			fromContactGroup, err := model.ActContactGroup(apply.FromId, apply.ToId, updatesFromContactGroup)
 			if err != nil {
 				log.Logger.Info(fmt.Sprintf("%v", fromContactGroup))
 				c.JSON(http.StatusOK, gin.H{"code": 4, "msg": "操作错误"})
@@ -233,10 +233,17 @@ func OperateApply(c *gin.Context) {
 			go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_AGREE)
 
 			//2、告诉管理员消息
-			toMap := make(map[string]interface{})
-			toMap["apply"] = tempApply
-			toMapStr, _ := json.Marshal(toMap)
-			go server.UserFriendNoticeMsg(apply.FromId, group.OwnerUid, string(toMapStr), server.MSG_MEDIA_GROUP_AGREE)
+			contactGroups, err := model.GetGroupUserManager(apply.ToId)
+			if err != nil {
+				c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+				return
+			}
+			for _, v := range contactGroups {
+				toMap := make(map[string]interface{})
+				toMap["apply"] = tempApply
+				toMapStr, _ := json.Marshal(toMap)
+				go server.UserFriendNoticeMsg(apply.FromId, v.FromId, string(toMapStr), server.MSG_MEDIA_GROUP_AGREE)
+			}
 
 			//3、告诉群的人消息
 			toGroupMap := make(map[string]interface{})
@@ -289,10 +296,17 @@ func OperateApply(c *gin.Context) {
 			fromMapStr, _ := json.Marshal(fromMap)
 			go server.UserFriendNoticeMsg(group.OwnerUid, apply.FromId, string(fromMapStr), server.MSG_MEDIA_GROUP_REFUSE)
 
-			toMap := make(map[string]interface{})
-			toMap["apply"] = tempApply
-			toMapStr, _ := json.Marshal(toMap)
-			go server.UserFriendNoticeMsg(apply.FromId, group.OwnerUid, string(toMapStr), server.MSG_MEDIA_GROUP_REFUSE)
+			contactGroups, err := model.GetGroupUserManager(apply.ToId)
+			if err != nil {
+				c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "操作错误"})
+				return
+			}
+			for _, v := range contactGroups {
+				toMap := make(map[string]interface{})
+				toMap["apply"] = tempApply
+				toMapStr, _ := json.Marshal(toMap)
+				go server.UserFriendNoticeMsg(apply.FromId, v.FromId, string(toMapStr), server.MSG_MEDIA_GROUP_REFUSE)
+			}
 		}
 	}
 

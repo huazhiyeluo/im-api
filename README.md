@@ -1,5 +1,11 @@
 ### QIM即时通讯(IM)客户端-简单版的类QQ微信
 
+运行： 
+`
+go mod tidy
+go run main.go
+`
+
 配置文件地址：./config/app.yml
 
 ```

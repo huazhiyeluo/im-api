@@ -165,6 +165,17 @@ func AddSelfFriend(uid uint64) {
 // 加入默认群
 func AddDefaultGroup(uid uint64) {
 	var groupId uint64 = 10000
+
+	group, err := model.FindGroupByGroupId(groupId)
+	if err != nil {
+		log.Printf("%v", group)
+		return
+	}
+
+	if group.Num >= 500 {
+		return
+	}
+
 	nowtime := time.Now().Unix()
 	var updatesFromContactGroup []*model.Fields
 	updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "level", Otype: 2, Value: 1})
@@ -174,12 +185,6 @@ func AddDefaultGroup(uid uint64) {
 	contactGroup, err := model.ActContactGroup(uid, groupId, updatesFromContactGroup)
 	if err != nil {
 		log.Printf("%v", contactGroup)
-		return
-	}
-
-	group, err := model.FindGroupByGroupId(groupId)
-	if err != nil {
-		log.Printf("%v", group)
 		return
 	}
 

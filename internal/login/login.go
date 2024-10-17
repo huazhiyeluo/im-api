@@ -103,30 +103,8 @@ func Action(cin *schema.CommonData, in *schema.LoginData, pv *schema.PublicVar, 
 	}
 
 	if pv.IsNewUser == 1 {
-
-		insertFriendGroupData := &model.FriendGroup{
-			OwnerUid:  pv.Uid,
-			Name:      "默认分组",
-			IsDefault: 1,
-		}
-		friendGroup, err := model.CreateFriendGroup(insertFriendGroupData)
-		if err != nil {
-			log.Printf("%v", friendGroup)
-			pv.Err = errors.New("DB Error")
-			return nil
-		}
-
-		var updatesContactFriend []*model.Fields
-		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "friend_group_id", Otype: 2, Value: friendGroup.FriendGroupId})
-		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "level", Otype: 2, Value: 1})
-		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "remark", Otype: 2, Value: ""})
-		updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
-		toContactFriend, err := model.ActContactFriend(pv.Uid, pv.Uid, updatesContactFriend)
-		if err != nil {
-			log.Printf("%v", toContactFriend)
-			pv.Err = errors.New("DB Error")
-			return nil
-		}
+		AddDefaultGroup(pv.Uid)
+		AddSelfFriend(pv.Uid)
 	}
 
 	res["user"] = tempUser
@@ -156,4 +134,59 @@ func Login(cin *schema.CommonData, in *schema.LoginData) (interface{}, error) {
 		return "", pv.Err
 	}
 	return res, nil
+}
+
+// 把自己加成好友
+func AddSelfFriend(uid uint64) {
+	nowtime := time.Now().Unix()
+	insertFriendGroupData := &model.FriendGroup{
+		OwnerUid:  uid,
+		Name:      "默认分组",
+		IsDefault: 1,
+	}
+	friendGroup, err := model.CreateFriendGroup(insertFriendGroupData)
+	if err != nil {
+		log.Printf("%v", friendGroup)
+		return
+	}
+
+	var updatesContactFriend []*model.Fields
+	updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "friend_group_id", Otype: 2, Value: friendGroup.FriendGroupId})
+	updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "level", Otype: 2, Value: 1})
+	updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "remark", Otype: 2, Value: ""})
+	updatesContactFriend = append(updatesContactFriend, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+	toContactFriend, err := model.ActContactFriend(uid, uid, updatesContactFriend)
+	if err != nil {
+		log.Printf("%v", toContactFriend)
+		return
+	}
+}
+
+// 加入默认群
+func AddDefaultGroup(uid uint64) {
+	var groupId uint64 = 10000
+	nowtime := time.Now().Unix()
+	var updatesFromContactGroup []*model.Fields
+	updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "level", Otype: 2, Value: 1})
+	updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "remark", Otype: 2, Value: ""})
+	updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "nickname", Otype: 2, Value: ""})
+	updatesFromContactGroup = append(updatesFromContactGroup, &model.Fields{Field: "join_time", Otype: 2, Value: nowtime})
+	contactGroup, err := model.ActContactGroup(uid, groupId, updatesFromContactGroup)
+	if err != nil {
+		log.Printf("%v", contactGroup)
+		return
+	}
+
+	group, err := model.FindGroupByGroupId(groupId)
+	if err != nil {
+		log.Printf("%v", group)
+		return
+	}
+
+	group.Num = group.Num + 1
+	group, err = model.UpdateGroup(group)
+	if err != nil {
+		log.Printf("%v", group)
+		return
+	}
 }

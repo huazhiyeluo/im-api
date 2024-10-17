@@ -132,10 +132,6 @@ func Chat(c *gin.Context) {
 		handleClientDisconnect(oldclient.(*Client), deviceid)
 	}
 
-	if oldclient, ok := manager.Clients.Load(uid); ok {
-		handleClientDisconnect(oldclient.(*Client), deviceid)
-	}
-
 	nowtime := time.Now().Unix()
 	client := &Client{
 		Id:            utils.GenGUID(),

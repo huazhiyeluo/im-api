@@ -1,30 +1,3 @@
-### QIM即时通讯(IM)客户端-简单版的类QQ微信
-
-运行：
-`go mod tidy `
-
-`go run main.go`
-
-配置文件地址：./config/app.yml
-
-```
-mysql:
-  dns: "root:xxx@tcp(xxx:xxx)/?charset=utf8mb4&parseTime=True&loc=Local"
-redis:
-  addr: "xxx:xxx"
-  password: "xxx"
-  db: 0
-port:
-  server: ":xxx"
-  udp: xxx
-cdn:
-  path: "xxx"
-  url: "xxx"
-```
-
-mysql数据库： ./qqim.sql
-
-```
 
 # 创建数据库
 # ------------------------------------------------------------
@@ -313,5 +286,3 @@ CREATE TABLE `usermap_sso` (
 INSERT INTO `group` (`group_id`, `owner_uid`, `type`, `name`, `icon`, `info`, `num`, `exp`, `create_time`, `update_time`)
 VALUES
 	(10000, 10000, 0, '江山美色', 'https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png', '《江山美色》是网络作家墨武于2008', 5, 0, 1729239455, 1729239455);
-
-```

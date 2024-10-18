@@ -319,6 +319,7 @@ func AddContactFriend(c *gin.Context) {
 		return
 	}
 	if apply.Id != 0 {
+		_sendApplyNotic(apply, fromUser, toUser)
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "已经申请过了，请等待"})
 		return
 	}
@@ -329,6 +330,7 @@ func AddContactFriend(c *gin.Context) {
 		return
 	}
 	if apply.Id != 0 {
+		_sendApplyNotic(apply, toUser, fromUser)
 		c.JSON(http.StatusOK, gin.H{"code": 1, "msg": "对方申请你为好友，请通过"})
 		return
 	}
@@ -349,6 +351,15 @@ func AddContactFriend(c *gin.Context) {
 		return
 	}
 
+	_sendApplyNotic(apply, fromUser, toUser)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+	})
+
+}
+
+func _sendApplyNotic(apply *model.Apply, fromUser *model.User, toUser *model.User) {
 	//应用数据处理
 	tempApply := schema.GetResApplyUser(apply, fromUser, toUser)
 
@@ -361,11 +372,6 @@ func AddContactFriend(c *gin.Context) {
 	fromMap["apply"] = tempApply
 	fromMapStr, _ := json.Marshal(fromMap)
 	go server.UserFriendNoticeMsg(apply.ToId, apply.FromId, string(fromMapStr), server.MSG_MEDIA_FRIEND_ADD)
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-	})
-
 }
 
 // 2-2、邀请好友

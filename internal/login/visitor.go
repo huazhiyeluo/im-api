@@ -60,5 +60,5 @@ func (b *VisitorLogin) IsNewUser() {
 	}
 	b.pv.Uid = usermap.Uid
 	b.pv.Nickname = fmt.Sprintf("USER_%d", usermap.Uid)
-	b.pv.Avatar = fmt.Sprintf("http://img.siyuwen.com/godata/avatar/%d.jpg", utils.GetRandNum(0, 580))
+	b.pv.Avatar = fmt.Sprintf("https://img.siyuwen.com/godata/avatar/%d.jpg", utils.GetRandNum(0, 580))
 }

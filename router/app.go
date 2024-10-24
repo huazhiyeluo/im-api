@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net/http"
 	"qqapi/internal/server"
 	"qqapi/internal/service"
 
@@ -9,6 +10,18 @@ import (
 
 func Router() *gin.Engine {
 	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "*")
+		c.Header("Access-Control-Allow-Headers", "*")
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+		c.Next() // 继续处理请求
+	})
 
 	r.Static("/static", "static")
 

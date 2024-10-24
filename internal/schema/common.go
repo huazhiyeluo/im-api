@@ -3,8 +3,8 @@ package schema
 import "github.com/gin-gonic/gin"
 
 type CommonData struct {
-	Devname  string `json:"devname"`
-	Deviceid string `json:"deviceid"`
+	Devname  string
+	Deviceid string
 }
 
 func GetHeader(c *gin.Context) *CommonData {
